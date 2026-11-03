@@ -1,0 +1,30 @@
+{
+    "keyboard_language": "us",
+    "github_account": null,
+    "ntp": true,
+    "hostname": "legit-os",
+    "locale_config": {
+        "sys_lang": "en_US.UTF-8",
+        "sys_enc": "UTF-8"
+    },
+    "kernels": ["linux"],
+    "bootloader": "systemd-boot",
+    "audio": "pipewire",
+    "packages": [
+        "base", "linux", "linux-firmware", "linux-headers", "base-devel",
+        "networkmanager", "openssh", "sudo",
+        "grub", "efibootmgr",
+        "hyprland", "waybar", "wofi", "kitty", "mako",
+        "polkit-gnome", "swaybg",
+        "pipewire", "wireplumber", "xdg-desktop-portal-hyprland",
+        "noto-fonts", "noto-fonts-emoji", "ttf-jetbrains-mono",
+        "git", "vim", "tmux", "htop",
+        "clang", "cmake", "meson", "ninja", "python-pip", "nodejs", "rustup",
+        "valgrind", "code", "qemu-desktop",
+        "nmap", "sqlmap", "nikto", "hydra", "john", "hashcat",
+        "aircrack-ng", "wireshark-qt", "metasploit",
+        "radare2", "gdb", "ghidra",
+        "archiso", "arch-install-scripts"
+    ],
+    "services": ["NetworkManager"]
+}

@@ -1,0 +1,4 @@
+# Force LF everywhere: shell scripts and text configs are copied verbatim
+# into the live ISO — CRLF endings would break them.
+* text=auto eol=lf
+*.png binary

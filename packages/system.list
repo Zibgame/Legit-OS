@@ -1,0 +1,95 @@
+# LEGIT OS system packages (live environment)
+# One package per line. Lines starting with '#' and blank lines are ignored.
+# Concatenated with offensive-tools.list by build/build.sh to produce
+# profile/packages.x86_64 for archiso.
+
+# --- LIVE / ISO BASE (mandatory parts of the archiso releng profile) ---
+base
+linux
+linux-firmware
+mkinitcpio
+mkinitcpio-archiso
+mkinitcpio-nfs-utils
+nbd
+pv
+amd-ucode
+intel-ucode
+
+# --- KERNEL / BOOT / FILESYSTEMS (kept from releng, trimmed) ---
+grub
+efibootmgr
+syslinux
+btrfs-progs
+cryptsetup
+dosfstools
+e2fsprogs
+f2fs-tools
+lvm2
+
+# --- INSTALLER ---
+arch-install-scripts
+archinstall
+
+# --- NETWORK ---
+iwd
+wpa_supplicant
+networkmanager
+network-manager-applet
+dnsmasq
+openssh
+curl
+wget
+rsync
+whois
+bind
+traceroute
+
+# --- CORE UTILITIES ---
+sudo
+man-db
+man-pages
+bash-completion
+git
+vim
+nano
+less
+which
+file
+tar
+unzip
+zip
+xz
+zstd
+tmux
+htop
+bat
+ripgrep
+
+# --- AUDIO / DESKTOP STACK ---
+pipewire
+pipewire-audio
+wireplumber
+alsa-utils
+hyprland
+xdg-desktop-portal-hyprland
+xdg-desktop-portal-gtk
+waybar
+wofi
+kitty
+mako
+polkit-gnome
+wl-clipboard
+grim
+slurp
+brightnessctl
+xdg-user-dirs
+swaybg
+
+# --- FONTS ---
+noto-fonts
+noto-fonts-emoji
+ttf-jetbrains-mono
+terminus-font
+
+# --- BROWSER / DOCS ---
+firefox

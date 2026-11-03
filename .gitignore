@@ -1,0 +1,9 @@
+# Build output and working directory
+/out/
+/work/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.swp
+target/

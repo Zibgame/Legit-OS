@@ -1,0 +1,45 @@
+# LEGIT OS development toolchain
+# One package per line. Lines starting with '#' and blank lines are ignored.
+# Everything here comes from the official Arch repositories.
+# Goal: LEGIT OS must be able to develop on itself (and rebuild its own ISO).
+
+# --- TOOLCHAIN (compilers / build systems) ---
+base-devel
+clang
+cmake
+meson
+ninja
+ccache
+
+# --- PYTHON ---
+python
+python-pip
+python-virtualenv
+
+# --- NODE / JS ---
+nodejs
+npm
+
+# --- RUST ---
+rustup
+
+# --- DEV UTILITIES ---
+valgrind
+strace
+xxd
+gawk
+diffutils
+patch
+jq
+tree
+
+# --- EDITORS ---
+code
+
+# --- EMULATION / TESTING (run LEGIT OS inside LEGIT OS) ---
+qemu-desktop
+edk2-ovmf
+
+# --- SELF-HOSTING: rebuild the LEGIT OS ISO from LEGIT OS itself ---
+archiso
+arch-install-scripts

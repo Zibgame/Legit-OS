@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# legit-install - run Archinstall with the LEGIT OS bundled preset.
+set -euo pipefail
+
+CONFIG="/etc/archinstall/user-configuration.json"
+
+if [[ ! -f "$CONFIG" ]]; then
+    echo "ERROR: $CONFIG not found. Run from the LEGIT OS live ISO." >&2
+    exit 1
+fi
+
+echo "LEGIT OS - launching Archinstall with LEGIT preset."
+echo "Disk layout stays interactive: choose your target(s) in Archinstall."
+echo
+exec archinstall --config "$CONFIG" "$@"

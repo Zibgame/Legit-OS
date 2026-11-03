@@ -1,0 +1,63 @@
+# LEGIT OS offensive security tools
+# One package per line. Lines starting with '#' and blank lines are ignored.
+# IMPORTANT: only packages available in the official Arch repositories are
+# listed here. Tools requiring the AUR are intentionally NOT enabled (the
+# project does not ship a personal Pacman repository); they are documented in
+# the commented section at the bottom for deliberate, conscious additions.
+
+# --- RECON / SCAN ---
+nmap
+masscan
+arp-scan
+macchanger
+tcpdump
+dnsutils
+traceroute
+openbsd-netcat
+
+# --- WEB / APP TESTING ---
+sqlmap
+nikto
+gobuster
+
+# --- EXPLOIT / FRAMEWORKS ---
+metasploit
+exploitdb
+
+# --- BRUTE FORCE / PASSWORD ---
+hydra
+medusa
+john
+hashcat
+
+# --- WIRELESS ---
+aircrack-ng
+wireless_tools
+
+# --- SNIFFING / MITM ---
+wireshark-qt
+wireshark-cli
+bettercap
+mitmproxy
+
+# --- REVERSE ENGINEERING / BINARY ---
+radare2
+rizin
+ghidra
+gdb
+yara
+binwalk
+strace
+
+# --- SUPPORT / MISC ---
+binutils
+python-pwntools
+python-requests
+
+# ----------------------------------------------------------------------
+# Not packaged in official repositories (AUR only) - NOT installed.
+# Removed from the enabled list: dirb, dirsearch, gnu-netcat, netdiscover,
+# tshark (wireshark-cli provides it), wafw00f, whatweb.
+# Manual candidates if a maintainer ever makes them explicit:
+#   burpsuite, bloodhound, evilginx2, getsploit, msfvenom-wrappers, scylla
+# ----------------------------------------------------------------------
