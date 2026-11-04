@@ -24,4 +24,11 @@ file_permissions=(
   ["/usr/local/bin/livecd-sound"]="0:0:755"
   ["/usr/local/bin/legit-info"]="0:0:755"
   ["/usr/local/bin/legit-install"]="0:0:755"
+  ["/usr/local/bin/legit-ai-install"]="0:0:755"
+  ["/usr/local/bin/legit-shell-start"]="0:0:755"
+  ["/usr/local/bin/legit-shell-ctl"]="0:0:755"
+  ["/usr/local/bin/legit-desktop-init"]="0:0:755"
+  ["/usr/local/bin/legit-desktop-check"]="0:0:755"
+  ["/usr/local/bin/legit-liveuser-init"]="0:0:755"
+  ["/etc/sudoers.d/10-legit"]="0:0:440"
 )

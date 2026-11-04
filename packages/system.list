@@ -76,6 +76,12 @@ xdg-desktop-portal-gtk
 waybar
 wofi
 kitty
+quickshell
+gnome-console
+gnome-terminal
+nautilus
+swaylock
+xdg-terminal-exec
 mako
 polkit-gnome
 wl-clipboard
@@ -83,7 +89,23 @@ grim
 slurp
 brightnessctl
 xdg-user-dirs
+xdg-user-dirs-gtk
 swaybg
+
+# --- GNOME / ADWAITA INTEGRATION (dark by default) ---
+# Nautilus (GNOME Files) + its virtual filesystem backends so removable media,
+# MTP phones and SMB shares show up, plus the dark Adwaita theme bits.
+gvfs
+gvfs-mtp
+gvfs-smb
+sushi
+file-roller
+ffmpegthumbnailer
+gnome-themes-extra
+adwaita-icon-theme
+adwaita-cursors
+cantarell-fonts
+dconf
 
 # --- FONTS ---
 noto-fonts
@@ -93,3 +115,4 @@ terminus-font
 
 # --- BROWSER / DOCS ---
 firefox
+chromium

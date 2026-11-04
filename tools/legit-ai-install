@@ -1,0 +1,56 @@
+#!/bin/bash
+# LEGIT OS - install the AI coding agents (Codex, Crush, OpenCode).
+#
+# Downloads the official binaries published by each project. No API keys,
+# tokens or session files are created here: each tool must be authenticated
+# by the user inside the terminal. Safe to re-run.
+#
+# Live environment note: the airootfs overlay is a small tmpfs by default,
+# so we enlarge it first when the file system runs out of space.
+set -u
+
+if [ "$(df -k / | tail -n 1 | awk '{print $4}')" -lt 500000 ]; then
+    mount -o remount,size=4G /run/archiso/cowspace 2>/dev/null && echo "cow space enlarged to 4G"
+fi
+
+echo "=== OpenAI Codex CLI (official release binary) ==="
+if ! command -v codex >/dev/null 2>&1; then
+    URL=$(curl -s https://api.github.com/repos/openai/codex/releases/latest \
+        | grep -oE '"browser_download_url": *"[^"]*codex-x86_64-unknown-linux-musl\.tar\.gz"' \
+        | head -n 1 | grep -oE 'https[^"]*')
+    if [ -n "$URL" ]; then
+        curl -sL "$URL" -o /tmp/codex.tgz
+        tar -xzf /tmp/codex.tgz -C /tmp
+        B=$(find /tmp/codex-x86_64-unknown-linux-musl -maxdepth 2 -type f \
+            \( -name "codex" -o -name "codex-x86_64-unknown-linux-musl" \) | head -n 1)
+        [ -n "$B" ] && mv "$B" /usr/bin/codex && chmod +x /usr/bin/codex
+        rm -rf /tmp/codex.tgz /tmp/codex-x86_64-unknown-linux-musl
+    fi
+fi
+codex --version 2>&1 | head -n 1
+
+echo "=== Crush (Charmbracelet official release binary) ==="
+if ! command -v crush >/dev/null 2>&1; then
+    URL=$(curl -s https://api.github.com/repos/charmbracelet/crush/releases/latest \
+        | grep -oE '"browser_download_url": *"[^"]*Linux_x86_64\.tar\.gz"' \
+        | grep -v checksum | head -n 1 | grep -oE 'https[^"]*')
+    if [ -n "$URL" ]; then
+        curl -sL "$URL" -o /tmp/crush.tgz
+        tar -xzf /tmp/crush.tgz -C /tmp
+        mv /tmp/crush_*/crush /usr/local/bin/crush && chmod +x /usr/local/bin/crush
+        rm -rf /tmp/crush.tgz /tmp/crush_*
+    fi
+fi
+crush --version 2>&1 | head -n 1
+
+echo "=== OpenCode (official installer) ==="
+if ! command -v opencode >/dev/null 2>&1; then
+    curl -fsSL https://opencode.ai/install | bash
+    ln -sf "$HOME/.opencode/bin/opencode" /usr/local/bin/opencode
+fi
+opencode --version 2>&1 | head -n 1
+
+echo "=== summary ==="
+for c in codex crush opencode; do
+    printf "%-10s: %s\n" "$c" "$(command -v $c || echo MISSING)"
+done

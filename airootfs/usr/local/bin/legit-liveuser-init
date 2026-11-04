@@ -1,0 +1,30 @@
+#!/bin/sh
+# LEGIT OS - provision the live desktop user.
+#
+# The desktop session runs as a normal user, not as root: GNOME applications
+# such as Nautilus (GNOME Files) refuse to run under the root account. Called
+# as ExecStartPre of getty@tty1, so the account exists before the autologin.
+#
+# Idempotent: safe to run on every boot.
+set -u
+
+USERNAME=legit
+
+if ! id "$USERNAME" >/dev/null 2>&1; then
+    useradd -m \
+        -G wheel,video,input,render,audio \
+        -s /usr/bin/zsh \
+        "$USERNAME" || exit 1
+fi
+
+# Live CD: keep the password in sync with the documented one ("legit").
+printf '%s:%s\n' "$USERNAME" "$USERNAME" | chpasswd || exit 1
+
+# The session redirects its output to /var/log, which root owns; give the
+# session user writable log files (a failed redirect would abort the session).
+for f in /var/log/legit-hyprland.log /var/log/legit-shell.log; do
+    : > "$f"
+    chown "$USERNAME:$USERNAME" "$f"
+done
+
+exit 0

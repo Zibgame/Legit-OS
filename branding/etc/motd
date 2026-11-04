@@ -8,8 +8,14 @@
   Reverse Engineering / Vulnerability Research
 
   - Connect to Wi-Fi with       iwctl
-  - Start a terminal (Hyprland) SUPER + RETURN
+  - Desktop session (live)      user: legit  /  password: legit
+  - Rescue shell (other TTY)    user: root   /  password: legit
+  - Start a terminal (Hyprland) CTRL + ALT + T   (GNOME Terminal)
+  - Files (Nautilus)            SUPER + E
   - Launcher (wofi)             SUPER + SPACE
+  - Start menu                  SUPER
+  - SSH from host               ssh root@<ip>  (password: legit)
+  - Desktop self-test           legit-desktop-check
   - Launch the installer        legit-install  (Archinstall, LEGIT preset)
 
   Authorized security research only. Offensive by design.

@@ -28,16 +28,43 @@ tar -C "$SRC_DIR/profile" -cf - . | tar -C "$PROFILE_DIR" -xf -
 # 3. Layer LEGIT OS customizations on top of the releng base.
 #    a. Our brand-focused airootfs additions (motd, gun icons, skel…)
 tar -C "$SRC_DIR/airootfs" -cf - . | tar -C "$PROFILE_DIR/airootfs" -xf -
-#    b. Hyprland configuration into /etc/skel (so every new user inherits it)
-mkdir -p "$PROFILE_DIR/airootfs/etc/skel/.config"
+#    b. Hyprland configuration into /etc/skel (so every new user inherits it),
+#       and for root directly since the tty1 autologin session runs as root
+mkdir -p "$PROFILE_DIR/airootfs/etc/skel/.config" "$PROFILE_DIR/airootfs/root/.config"
 tar -C "$SRC_DIR/hyprland" -cf - . | tar -C "$PROFILE_DIR/airootfs/etc/skel/.config" -xf -
-#    c. Branding assets (motd is authoritative over releng's default)
+tar -C "$SRC_DIR/hyprland" -cf - . | tar -C "$PROFILE_DIR/airootfs/root/.config" -xf -
+#    c. LEGIT Shell (Quickshell taskbar + start menu) next to the Hyprland config
+mkdir -p "$PROFILE_DIR/airootfs/etc/skel/.config/quickshell/legit-shell" \
+         "$PROFILE_DIR/airootfs/root/.config/quickshell/legit-shell"
+tar -C "$SRC_DIR/legit-shell" -cf - . | tar -C "$PROFILE_DIR/airootfs/etc/skel/.config/quickshell/legit-shell" -xf -
+tar -C "$SRC_DIR/legit-shell" -cf - . | tar -C "$PROFILE_DIR/airootfs/root/.config/quickshell/legit-shell" -xf -
+#    d. Branding assets (motd is authoritative over releng's default)
 tar -C "$SRC_DIR/branding" -cf - . | tar -C "$PROFILE_DIR/airootfs" -xf -
-#    d. Archinstall configuration shipped in the ISO
+#    e. Archinstall configuration shipped in the ISO
 mkdir -p "$PROFILE_DIR/airootfs/etc/archinstall"
 tar -C "$SRC_DIR/archinstall" -cf - . | tar -C "$PROFILE_DIR/airootfs/etc/archinstall" -xf -
-#    e. Convenience CLI helpers
+#    f. Convenience CLI helpers
 tar -C "$SRC_DIR/tools" -cf - . | tar -C "$PROFILE_DIR/airootfs/usr/local/bin" -xf -
+#    g. Mask systemd-loop@.service (systemd >=258 auto-attaches block devices
+#       with systemd-dissect): on the live media it only fails on the DVD
+#       (sr0 has no partition table) and pollutes `systemctl --failed`.
+ln -sf /dev/null "$PROFILE_DIR/airootfs/etc/systemd/system/systemd-loop@.service"
+#    h. Executable bits on the helper scripts: the Windows checkout loses
+#       them, so set them explicitly for every script landing in /usr/local/bin
+#       (legit-shell-*, legit-info/install, legit-ai-install...).
+chmod 755 "$PROFILE_DIR"/airootfs/usr/local/bin/*
+#    i. Win11 icon theme (faithful Windows 11 icons). It is not packaged in the
+#       Arch repositories, so fetch the pinned upstream commit and install it
+#       into the image. Never fatal: without it the icons fall back to Adwaita.
+WIN11_SHA="a5b460a407da143b32f19a503d7fcebb3edf2371"
+if curl -fsSL "https://github.com/yeyushengfan258/Win11-icon-theme/archive/${WIN11_SHA}.tar.gz" -o /tmp/win11.tgz \
+   && mkdir -p /tmp/win11 \
+   && tar -xzf /tmp/win11.tgz -C /tmp/win11 --strip-components=1; then
+    ( cd /tmp/win11 && ./install.sh -d "$PROFILE_DIR/airootfs/usr/share/icons" -n Win11 ) \
+        || echo "WARNING: Win11 icon theme install failed; using the default icons" >&2
+else
+    echo "WARNING: could not download the Win11 icon theme; using the default icons" >&2
+fi
 
 # 4. Build the package list from the curated sources (every packages/*.list).
 find "$SRC_DIR/packages" -name '*.list' -print0 | sort -z | xargs -0 cat \

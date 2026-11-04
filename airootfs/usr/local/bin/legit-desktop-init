@@ -1,0 +1,39 @@
+#!/bin/sh
+# LEGIT OS - apply the GNOME/Adwaita dark desktop preferences.
+#
+# Runs at session start (see hyprland.lua) and is idempotent: every step is
+# best-effort, so a missing helper or an unreachable D-Bus session never
+# blocks the login. Static GTK fallbacks ship in /etc/skel/.config (and in
+# /root/.config for the live session, which auto-logs in as root).
+set -u
+
+# --- GNOME / libadwaita preferences (dconf, via gsettings) ------------------
+if command -v gsettings >/dev/null 2>&1; then
+    # Dark mode for libadwaita apps (Nautilus, GNOME Terminal, ...).
+    gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+    gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita'
+    # Windows 11 style icons (shipped in /usr/share/icons/Win11-dark).
+    gsettings set org.gnome.desktop.interface icon-theme 'Win11-dark'
+    gsettings set org.gnome.desktop.interface cursor-theme 'Adwaita'
+    gsettings set org.gnome.desktop.interface font-name 'Cantarell 11'
+    # Close / minimize / maximize, top-right (GNOME button layout).
+    gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'
+    # GNOME Terminal dark variant.
+    gsettings set org.gnome.Terminal.Legacy.Settings theme-variant 'dark'
+fi
+
+# --- Default file manager: Nautilus (GNOME Files) ---------------------------
+if command -v xdg-mime >/dev/null 2>&1; then
+    xdg-mime default org.gnome.Nautilus.desktop inode/directory
+    xdg-mime default org.gnome.Nautilus.desktop application/x-gnome-saved-search
+fi
+if command -v xdg-settings >/dev/null 2>&1; then
+    xdg-settings set default-file-manager org.gnome.Nautilus.desktop
+fi
+
+# --- Standard XDG folders (Documents, Downloads, ...) for Nautilus ----------
+if command -v xdg-user-dirs-update >/dev/null 2>&1; then
+    xdg-user-dirs-update
+fi
+
+exit 0

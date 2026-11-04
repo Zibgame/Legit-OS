@@ -3,5 +3,5 @@
 FROM docker.io/library/archlinux:latest AS builder
 
 RUN pacman --noconfirm -Sy archlinux-keyring \
-    && pacman --noconfirm -Syu archiso \
+    && pacman --noconfirm -Syu archiso curl \
     && pacman --noconfirm -Scc

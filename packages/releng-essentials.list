@@ -1,0 +1,36 @@
+# Essential packages from the official archiso 'releng' profile that our
+# curated lists must also include (our packages.x86_64 is generated only
+# from packages/*.list, so anything only in releng would be lost here).
+#
+# - zsh + grml-zsh-config: root's shell on the live CD (pam_shells denies
+#   every login without it, including the tty1 autologin).
+# - systemd-resolvconf: resolvconf shim for dhcpdns client plumbing.
+# - mtools / squashfs-tools: mkarchiso & rescue tooling.
+# - reflector refreshes mirrorlists; wireless-regdb = wifi regulatory db.
+zsh
+grml-zsh-config
+systemd-resolvconf
+mtools
+squashfs-tools
+reflector
+wireless-regdb
+xdg-utils
+kitty-terminfo
+edk2-shell
+sof-firmware
+
+# Disk / install / rescue helpers (removed when the releng list was replaced)
+parted
+gptfdisk
+partclone
+testdisk
+ntfsprogs
+exfatprogs
+xfsprogs
+ddrescue
+
+# Hypervisor guest agents (VirtualBox, QEMU, VMware, Hyper-V)
+virtualbox-guest-utils-nox
+qemu-guest-agent
+open-vm-tools
+hyperv

@@ -1,0 +1,13 @@
+#!/bin/sh
+# LEGIT OS - start LEGIT Shell (Quickshell) for the current user.
+
+# Single instance: a second bar would reserve the taskbar height again, which
+# pushes every maximized window up by one extra bar.
+if pgrep -x quickshell >/dev/null 2>&1; then
+    exit 0
+fi
+
+# Software rendering: the VirtualBox svga GPU produces invalid EGL buffers.
+export QT_QUICK_BACKEND=software
+export QT_QPA_PLATFORM=wayland
+exec quickshell -p "$HOME/.config/quickshell/legit-shell" >> /var/log/legit-shell.log 2>&1

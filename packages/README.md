@@ -4,7 +4,8 @@
 lines) into `packages.x86_64` inside the archiso profile used at build time.
 
 - `system.list` — Arch base, firmware, boot, networking, Hyprland desktop
-  stack, fonts, utilities.
+  stack, GNOME/libadwaita integration (Nautilus, GNOME Terminal, Adwaita
+  dark theme), fonts, utilities.
 - `offensive-tools.list` — offensive security tools available in the **official
   Arch repositories only** (no personal Pacman repository, no AUR at build
   time). AUR candidates are listed commented-out at the bottom.
