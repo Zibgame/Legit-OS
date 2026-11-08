@@ -61,7 +61,7 @@ tar -C "$SRC_DIR/tools" \
     --exclude=legit-info --exclude=legit-personalize --exclude=legit-vpn \
     --exclude=legit-tools-install --exclude=legit-ai-install \
     -cf - . | tar -C "$PROFILE_DIR/airootfs/usr/local/bin" -xf -
-chmod 755 "$PROFILE_DIR"/airootfs/usr/local/bin/*
+chmod 755 "$PROFILE_DIR"/airootfs/usr/local/bin/* 2>/dev/null || true
 install -Dm644 "$SRC_DIR/packages/aur-tools.list" \
     "$PROFILE_DIR/airootfs/usr/share/legit/aur-tools.list"
 for list in system offensive-tools dev-tools releng-essentials; do
