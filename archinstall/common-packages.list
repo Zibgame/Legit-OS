@@ -8,6 +8,7 @@ openconnect
 wireguard-tools
 openssh
 sudo
+xdg-user-dirs
 git
 vim
 vim-nerdtree
