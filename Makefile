@@ -21,9 +21,16 @@ RUN := MSYS_NO_PATHCONV=1 "$(DOCKER)" run --rm --privileged \
 	--volume "$(MNT)":/legit-os \
 	--volume "D:/Legit-OS/out":/out \
 	--volume "D:/Legit-OS/.cache/archiso/pacman":/var/cache/pacman/pkg \
+	--volume "D:/Legit-OS/.cache/legit-aur":/aur-cache \
 	--env OUT_DIR=/out $(IMAGE) /bin/bash /legit-os/build/build.sh
 
-.PHONY: all re image vm
+.PHONY: all re image vm aur-clean
+
+# Wipes the persistent compiled-AUR cache; the next build recompiles every
+# AUR package (use this after upgrading packages/aur-tools.list versions).
+aur-clean:
+	@echo ">>> Clearing compiled AUR cache (D:/Legit-OS/.cache/legit-aur)..."
+	@rm -rf "D:/Legit-OS/.cache/legit-aur"
 
 all: image
 	@echo ">>> Building LEGIT OS ISO (this can take a while)..."

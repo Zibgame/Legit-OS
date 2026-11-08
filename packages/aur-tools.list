@@ -9,12 +9,16 @@
 ffuf-bin
 feroxbuster-bin
 nuclei-bin
-nuclei-templates
+# nuclei-templates is deliberately absent: the SSL-scanning proxy corrupts
+# its large tarball during compilation and the template set changes weekly
+# anyway. Run `nuclei -update-templates` after installation.
 subfinder-bin
 httpx-bin
 naabu
 amass
-dirsearch
+# dirsearch removed: its AUR PKGBUILD is out-of-date and incompatible with
+# the current Arch Python (pkg_resources); directory fuzzing is already
+# covered by ffuf, feroxbuster and gobuster.
 wafw00f
 whatweb
 arjun

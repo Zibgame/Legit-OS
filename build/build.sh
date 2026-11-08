@@ -65,17 +65,56 @@ fi
 #     local repository consumed by mkarchiso; no AUR helper ships in the ISO.
 AUR_LIST="$SRC_DIR/packages/aur-tools.list"
 AUR_REPO=/tmp/legit-aur-repo
+# Persistent host cache (mounted by the Makefile).  Compiled packages are
+# copied here as soon as they build, so a run aborted by the flaky network
+# resumes instead of recompiling everything from scratch.
+AUR_CACHE="${AUR_CACHE_DIR:-/aur-cache}"
 BUILD_PACMAN_CONF=/tmp/legit-pacman.conf
 mapfile -t AUR_PACKAGES < <(grep -v '^\s*#' "$AUR_LIST" | sed '/^\s*$/d')
 
 if ((${#AUR_PACKAGES[@]})); then
     rm -rf "$AUR_REPO" /tmp/paru-bin /home/aurbuilder
     mkdir -p "$AUR_REPO"
+    if [ -d "$AUR_CACHE" ]; then
+        echo ">>> Seeding local AUR repository from the persistent cache..."
+        find "$AUR_CACHE" -maxdepth 1 -type f -name '*-debug-*.pkg.tar.zst' -delete
+        find "$AUR_CACHE" -maxdepth 1 -type f -name '*.pkg.tar.zst' \
+            -exec cp -f '{}' "$AUR_REPO/" \;
+    fi
     userdel -r aurbuilder 2>/dev/null || true
     useradd -m -s /bin/bash aurbuilder
     printf 'aurbuilder ALL=(ALL) NOPASSWD: /usr/bin/pacman\n' \
         > /etc/sudoers.d/legit-aurbuilder
     chmod 440 /etc/sudoers.d/legit-aurbuilder
+
+    # The local SSL-scanning proxy corrupts long TLS downloads (curl
+    # "bad record mac").  Route every makepkg source download through a
+    # resuming, retrying curl loop so large sources (nuclei-templates,
+    # seclists, burpsuite) survive the flaky proxy instead of failing the
+    # whole build.
+    cat > /usr/local/bin/legit-robust-download <<'ROBUST_DOWNLOAD'
+#!/bin/bash
+# makepkg DLAGENTS callback: receives the partial output path, then the URL.
+output="$1"
+url="$2"
+attempt=0
+until curl -gqL -C - --connect-timeout 30 --retry 10 --retry-all-errors \
+        -o "$output" "$url"; do
+    attempt=$((attempt + 1))
+    if ((attempt >= 10)); then
+        echo "ERROR: download failed after $attempt rounds: $url" >&2
+        exit 1
+    fi
+    sleep $((attempt * 2))
+done
+ROBUST_DOWNLOAD
+    chmod 755 /usr/local/bin/legit-robust-download
+    cat >> /etc/makepkg.conf <<'ROBUST_DLAGENTS'
+
+# LEGIT OS builder: resilient source downloads (see legit-robust-download).
+DLAGENTS=('https::/usr/local/bin/legit-robust-download %o %u'
+          'http::/usr/local/bin/legit-robust-download %o %u')
+ROBUST_DLAGENTS
 
     git clone -q --depth 1 https://aur.archlinux.org/paru-bin.git /tmp/paru-bin
     chown -R aurbuilder:aurbuilder /tmp/paru-bin
@@ -83,12 +122,47 @@ if ((${#AUR_PACKAGES[@]})); then
     pacman --noconfirm -U /tmp/paru-bin/*.pkg.tar.zst
 
     for package in "${AUR_PACKAGES[@]}"; do
+        if find "$AUR_REPO" -maxdepth 1 -type f \
+            -name "$package-*.pkg.tar.zst" ! -name "$package-debug-*.pkg.tar.zst" \
+            -print -quit | grep -q .; then
+            echo ">>> Skipping already compiled AUR package: $package"
+            continue
+        fi
         echo ">>> Building maintained AUR security tool: $package"
-        runuser -u aurbuilder -- paru --noconfirm --needed --skipreview -S "$package"
+        built=0
+        for attempt in 1 2 3 4 5; do
+            if runuser -u aurbuilder -- paru --noconfirm --needed --skipreview -S "$package"; then
+                built=1
+                break
+            fi
+            echo "WARNING: $package build attempt $attempt failed; retrying..." >&2
+            sleep $((attempt * 5))
+        done
+        if ((built == 0)); then
+            echo "ERROR: $package failed after 5 build attempts." >&2
+            exit 1
+        fi
+        # Persist the fresh artifact immediately; drop any older version so
+        # the repository never offers two builds of the same tool.
+        new_artifact=$(find /home/aurbuilder/.cache/paru/clone -type f \
+            -name "$package-*.pkg.tar.zst" ! -name "$package-debug-*.pkg.tar.zst" \
+            | sort -V | tail -n 1)
+        if [ -n "$new_artifact" ]; then
+            artifact_name=${new_artifact##*/}
+            cp -f "$new_artifact" "$AUR_REPO/"
+            if [ -d "$AUR_CACHE" ]; then
+                cp -f "$new_artifact" "$AUR_CACHE/"
+            fi
+            find "$AUR_REPO" -maxdepth 1 -type f \
+                -name "$package-*.pkg.tar.zst" ! -name "$artifact_name" -delete
+        fi
     done
 
     find /home/aurbuilder/.cache/paru/clone /tmp/paru-bin \
-        -type f -name '*.pkg.tar.zst' -exec cp -f '{}' "$AUR_REPO/" \;
+        -type f -name '*.pkg.tar.zst' ! -name '*-debug-*.pkg.tar.zst' \
+        -exec cp -f '{}' "$AUR_REPO/" \;
+    find "$AUR_REPO" -maxdepth 1 -type f -name '*-debug-*.pkg.tar.zst' -delete
+    find "$AUR_CACHE" -maxdepth 1 -type f -name '*-debug-*.pkg.tar.zst' -delete 2>/dev/null || true
     repo-add "$AUR_REPO/legit-aur.db.tar.gz" "$AUR_REPO"/*.pkg.tar.zst
 
     # Keep the compiled repository inside the ISO. legit-install uses these
@@ -126,7 +200,6 @@ nmap
 ffuf-bin
 feroxbuster-bin
 nuclei-bin
-nuclei-templates
 netexec
 impacket
 metasploit

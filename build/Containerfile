@@ -8,5 +8,5 @@ FROM docker.io/library/archlinux:latest AS builder
 RUN printf 'Server = http://geo.mirror.pkgbuild.com/$repo/os/$arch\n' > /etc/pacman.d/mirrorlist \
     && pacman --noconfirm -Sy archlinux-keyring ca-certificates ca-certificates-mozilla \
     && update-ca-trust \
-    && pacman --noconfirm -Syu archiso base-devel curl git sudo \
+    && pacman --noconfirm -Syu archiso base-devel curl git sudo jq \
     && pacman --noconfirm -Scc
