@@ -30,6 +30,7 @@ enum4linux-ng
 # python-asyauth>=0.0.25 but the AUR package is frozen at 0.0.21.
 netexec
 responder
+python-ldap3-ad-auth
 python-bloodhound-ce
 python-certipy-nxc
 evil-winrm-py

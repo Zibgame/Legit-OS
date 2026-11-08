@@ -181,12 +181,35 @@ ROBUST_DLAGENTS
         for attempt in 1 2 3 4 5; do
             override_dir="$SRC_DIR/packages/aur-overrides/$package"
             if [ -d "$override_dir" ]; then
+                # makepkg --syncdeps can only resolve official-repository
+                # dependencies; anything AUR-only must come from paru first.
+                mapfile -t override_deps < <(
+                    bash -c "source '$override_dir/PKGBUILD' >/dev/null 2>&1; printf '%s\n' \"\${depends[@]}\"" 2>/dev/null
+                )
+                for dep in "${override_deps[@]}"; do
+                    [ -n "$dep" ] || continue
+                    if ! pacman -Si "$dep" >/dev/null 2>&1; then
+                        echo ">>> Installing AUR dependency of $package: $dep"
+                        runuser -u aurbuilder -- paru --noconfirm --needed --skipreview --asdeps -S "$dep"
+                    fi
+                done
                 build_dir="/home/aurbuilder/.cache/paru/clone/$package"
                 rm -rf "$build_dir"
                 mkdir -p "$build_dir"
                 cp -a "$override_dir"/. "$build_dir"/
                 chown -R aurbuilder:aurbuilder /home/aurbuilder/.cache
-                build_command=(bash -c "cd '$build_dir' && makepkg --noconfirm --syncdeps --needed")
+                case "$package" in
+                    netexec)
+                        pacman --noconfirm --needed -S git rust python-pip python-virtualenv
+                        ;;
+                    python-bloodhound-ce)
+                        pacman --noconfirm --needed -S python-installer
+                        ;;
+                esac
+                # Runtime dependencies may themselves live in the local AUR
+                # repository and need not be installed merely to package an
+                # already-built wheel or self-contained binary.
+                build_command=(bash -c "cd '$build_dir' && makepkg --noconfirm --nodeps")
             else
                 build_command=(paru --noconfirm --needed --skipreview -S "$package")
             fi
