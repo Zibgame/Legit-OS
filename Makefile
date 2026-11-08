@@ -1,10 +1,16 @@
 # LEGIT OS - local ISO build (no CI/CD, no remote build actions).
 # Runs mkarchiso inside an Arch Linux container (Docker Desktop, MINGW64 shell).
 #
-#   make     : build out/LEGIT_OS-<version>-x86_64.iso
-#   make re  : wipe prior output & rebuild the image from scratch
-#   make vm  : create/refresh the VirtualBox LEGIT-OS VM with the latest ISO
-#              and boot it (VirtualBox must be installed on the Windows host)
+#   make        : build out/LEGIT_OS-<version>-x86_64.iso
+#   make re     : wipe prior output & rebuild the image from scratch
+#   make aur-clean : wipe the compiled-AUR cache (full AUR recompilation)
+#   make vm     : create/refresh the VirtualBox LEGIT-OS VM with the latest ISO
+#                 and boot it (VirtualBox must be installed on the Windows host)
+#
+# Prerequisite once: export the Norton Web/Mail Shield root certificate
+# (SSL-scanning proxy) to D:/Legit-OS/.cache/host-ca.der, e.g.:
+#   Export-Certificate -Cert (Get-Item Cert:\LocalMachine\Root\<THUMBPRINT>) `
+#       -FilePath D:\Legit-OS\.cache\host-ca.der
 
 MSYS_NO_PATHCONV := 1
 # Make the Docker Desktop bin dir visible to the recipe shell (MSYS2 sh does
@@ -22,7 +28,16 @@ RUN := MSYS_NO_PATHCONV=1 "$(DOCKER)" run --rm --privileged \
 	--volume "D:/Legit-OS/out":/out \
 	--volume "D:/Legit-OS/.cache/archiso/pacman":/var/cache/pacman/pkg \
 	--volume "D:/Legit-OS/.cache/legit-aur":/aur-cache \
-	--env OUT_DIR=/out $(IMAGE) /bin/bash /legit-os/build/build.sh
+	--volume "D:/Legit-OS/.cache/host-ca.der":/tmp/host-ca.der:ro \
+	--env OUT_DIR=/out \
+	--env SRC_DIR=/legit-src \
+	$(IMAGE) /bin/bash -lc 'set -e; \
+	test -s /tmp/host-ca.der || { echo "FATAL: missing D:/Legit-OS/.cache/host-ca.der (export the Norton Web/Mail Shield root cert)"; exit 42; }; \
+	openssl x509 -inform DER -in /tmp/host-ca.der -out /etc/ca-certificates/trust-source/anchors/norton.crt; \
+	update-ca-trust; \
+	mkdir -p /legit-src; \
+	tar -C /legit-os --exclude=./out --exclude=./.git -cf - . | tar -C /legit-src -xf -; \
+	exec /bin/bash /legit-src/build/build.sh'
 
 .PHONY: all re image vm aur-clean
 

@@ -13,6 +13,17 @@ PROFILE_DIR="${PROFILE_DIR:-/tmp/legit-os-profile}"
 WORK_DIR="${WORK_DIR:-/tmp/legit-os-work}"
 OUT_DIR="${OUT_DIR:-/legit-os/out}"
 
+# 0. Use proper HTTPS mirrors at build time.  The builder image ships a plain
+#    HTTP bootstrap mirror which does not support byte ranges, so a partially
+#    downloaded package can never resume after an aborted run.
+cat > /etc/pacman.d/mirrorlist <<'MIRRORS'
+Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch
+Server = https://geo.mirror.pkgbuild.com/$repo/os/$arch
+Server = https://america.mirror.pkgbuild.com/$repo/os/$arch
+MIRRORS
+# Drop stale partial downloads left by crashed runs.
+find /var/cache/pacman/pkg -name '*.part' -delete 2>/dev/null || true
+
 # 1. Clean temporary and output directories.
 rm -rf "$PROFILE_DIR" "$WORK_DIR"
 mkdir -p "$PROFILE_DIR" "$OUT_DIR"
@@ -115,6 +126,13 @@ ROBUST_DOWNLOAD
 DLAGENTS=('https::/usr/local/bin/legit-robust-download %o %u'
           'http::/usr/local/bin/legit-robust-download %o %u')
 ROBUST_DLAGENTS
+
+    # Some Rust AUR packages enable LTO for both the binary and their test
+    # suite.  Cargo otherwise starts one memory-heavy rustc per
+    # available CPU and can exhaust Docker Desktop's WSL VM, taking the daemon
+    # down mid-build.  Serialise Cargo by default; callers may still override
+    # this explicitly when their builder has enough RAM.
+    export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}"
 
     git clone -q --depth 1 https://aur.archlinux.org/paru-bin.git /tmp/paru-bin
     chown -R aurbuilder:aurbuilder /tmp/paru-bin
