@@ -9,6 +9,8 @@ pkgdesc="LEGIT OS helper scripts (legit-info, legit-vpn, ...)"
 arch=(any)
 license=(MIT)
 depends=(bash)
+source=(legit-info legit-personalize legit-vpn legit-tools-install legit-ai-install)
+sha256sums=(SKIP SKIP SKIP SKIP SKIP)
 
 package() {
     for helper in legit-info legit-personalize legit-vpn legit-tools-install legit-ai-install; do
