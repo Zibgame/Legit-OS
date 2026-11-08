@@ -1,0 +1,20 @@
+# Maintained locally by build/build.sh - not published to the AUR.
+# Installs the two AI coding CLIs as global npm packages: OpenAI Codex and
+# OpenCode.  npm runs at build time inside the builder container; node must
+# trust the corporate SSL-scanning proxy (NODE_EXTRA_CA_CERTS), and
+# opencode-ai's postinstall (which fetches the platform binary) must be
+# allowed explicitly.
+pkgname=legit-ai-cli
+pkgver=2026.11.08
+pkgrel=1
+pkgdesc="LEGIT OS AI coding CLIs (OpenAI Codex + OpenCode)"
+arch=(any)
+license=(MIT)
+makedepends=(nodejs npm)
+
+package() {
+    export NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
+    npm install -g --prefix="$pkgdir/usr" \
+        --allow-scripts=opencode-ai \
+        @openai/codex opencode-ai
+}

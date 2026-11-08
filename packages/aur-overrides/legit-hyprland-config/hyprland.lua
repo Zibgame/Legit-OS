@@ -19,6 +19,7 @@ local terminal = "legit-terminal"
 hl.bind("CTRL + ALT + T",    hl.dsp.exec_cmd(terminal))
 hl.bind("SUPER + Return",    hl.dsp.exec_cmd(terminal))
 hl.bind("SUPER + Q",         hl.dsp.window.close())
+hl.bind("ALT + F4",          hl.dsp.window.close())
 hl.bind("SUPER + F",         hl.dsp.window.fullscreen({ mode = "fullscreen" }))
 hl.bind("SUPER + T",         hl.dsp.window.float({ action = "toggle" }))
 
