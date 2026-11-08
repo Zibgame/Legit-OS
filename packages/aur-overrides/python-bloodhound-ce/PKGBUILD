@@ -1,0 +1,24 @@
+pkgname=python-bloodhound-ce
+pkgver=1.9.1
+pkgrel=2
+pkgdesc="Python-based ingestor for BloodHound CE"
+arch=(any)
+url="https://github.com/dirkjanm/BloodHound.py"
+license=(MIT)
+depends=(
+    python
+    python-dnspython
+    python-ldap3
+    python-ldap3-ad-auth
+    python-pyasn1
+    python-pycryptodome
+    impacket
+)
+makedepends=(python-installer)
+source=("https://files.pythonhosted.org/packages/f1/2b/6905e28beed94e06faec90a4d33bea746735334d48e9b1f8f6377c406938/bloodhound_ce-${pkgver}-py3-none-any.whl")
+sha256sums=(bb3bd6fb67b9337c738d4168b4f712b0d5544bb543c7405cc27977e61f67bab6)
+noextract=("bloodhound_ce-${pkgver}-py3-none-any.whl")
+
+package() {
+    python -m installer --destdir="$pkgdir" "bloodhound_ce-${pkgver}-py3-none-any.whl"
+}

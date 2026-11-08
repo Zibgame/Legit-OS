@@ -94,6 +94,10 @@ if ((${#AUR_PACKAGES[@]})); then
     fi
     userdel -r aurbuilder 2>/dev/null || true
     useradd -m -s /bin/bash aurbuilder
+    # makepkg inherits the invoking user's keyring; point it at a keyserver
+    # which serves every key (keys.openpgp.org only lists verified mails).
+    runuser -u aurbuilder -- bash -c \
+        'mkdir -p ~/.gnupg && chmod 700 ~/.gnupg && printf "keyserver hkps://keyserver.ubuntu.com\nkeyserver-options timeout=30\n" > ~/.gnupg/gpg.conf'
     printf 'aurbuilder ALL=(ALL) NOPASSWD: /usr/bin/pacman\n' \
         > /etc/sudoers.d/legit-aurbuilder
     chmod 440 /etc/sudoers.d/legit-aurbuilder
@@ -147,9 +151,46 @@ ROBUST_DLAGENTS
             continue
         fi
         echo ">>> Building maintained AUR security tool: $package"
+        # Pre-import the PGP fingerprints the PKGBUILD validates against so
+        # makepkg never needs an interactive keyserver round-trip.  The
+        # default keyserver only serves verified identities and several are
+        # unusable through the corporate proxy; fall back per key.
+        aur_clone="/home/aurbuilder/.cache/paru/clone/$package"
+        pkgbuild="$aur_clone/PKGBUILD"
+        override_dir="$SRC_DIR/packages/aur-overrides/$package"
+        if [ ! -f "$pkgbuild" ] && [ -d "$override_dir" ]; then
+            pkgbuild="$override_dir/PKGBUILD"
+        fi
+        if [ ! -f "$pkgbuild" ]; then
+            scratch_clone="/tmp/legit-aur-pkgbuild/$package"
+            rm -rf "$scratch_clone"
+            git clone -q --depth 1 "https://aur.archlinux.org/$package.git" "$scratch_clone"
+            pkgbuild="$scratch_clone/PKGBUILD"
+        fi
+        for key in $(grep -oE '\b[A-F0-9]{40}\b' "$pkgbuild" 2>/dev/null | sort -u); do
+            if ! runuser -u aurbuilder -- gpg --list-keys "$key" >/dev/null 2>&1; then
+                echo ">>> Importing PGP key for $package: $key"
+                for keyserver in hkps://keyserver.ubuntu.com hkp://keyserver.ubuntu.com:80 hkps://keys.openpgp.org; do
+                    if runuser -u aurbuilder -- gpg --batch --keyserver "$keyserver" --recv-keys "$key"; then
+                        break
+                    fi
+                done
+            fi
+        done
         built=0
         for attempt in 1 2 3 4 5; do
-            if runuser -u aurbuilder -- paru --noconfirm --needed --skipreview -S "$package"; then
+            override_dir="$SRC_DIR/packages/aur-overrides/$package"
+            if [ -d "$override_dir" ]; then
+                build_dir="/home/aurbuilder/.cache/paru/clone/$package"
+                rm -rf "$build_dir"
+                mkdir -p "$build_dir"
+                cp -a "$override_dir"/. "$build_dir"/
+                chown -R aurbuilder:aurbuilder /home/aurbuilder/.cache
+                build_command=(bash -c "cd '$build_dir' && makepkg --noconfirm --syncdeps --needed")
+            else
+                build_command=(paru --noconfirm --needed --skipreview -S "$package")
+            fi
+            if runuser -u aurbuilder -- "${build_command[@]}"; then
                 built=1
                 break
             fi
