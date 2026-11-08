@@ -1,0 +1,19 @@
+#!/bin/sh
+# LEGIT OS terminal launcher.
+# The distro intentionally starts interactive terminals in /home so Vim and
+# NERDTree show the shared users directory instead of /home/legit.
+
+start_dir=/home
+
+if [ "${1:-}" = "--alternate" ]; then
+    shift
+    exec kgx --working-directory="$start_dir" "$@"
+fi
+
+# GNOME Terminal exposes the familiar Preferences UI that power-user and
+# security distributions traditionally ship. GNOME Console stays available
+# through --alternate for users who prefer its simpler interface.
+if [ "$#" -gt 0 ]; then
+    exec gnome-terminal --working-directory="$start_dir" -- "$@"
+fi
+exec gnome-terminal --working-directory="$start_dir"

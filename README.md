@@ -83,7 +83,10 @@ make vm    # create/refresh + boot the VirtualBox LEGIT-OS VM (latest ISO)
 The live session auto-logs in as the normal user **`legit`** (password `legit`)
 on tty1 and starts Hyprland (`hyprland.lua`, floating-first) with **LEGIT
 Shell** (Quickshell): a Windows-like taskbar, Start menu and quick-settings
-panel. `root` (password `legit`) stays available on the other TTYs
+panel. The control center vendors the original QML components from
+`orpen123/quickshell-setup` (Wi-Fi, Bluetooth, sliders and MPRIS media card),
+adapted to LEGIT's live services; attribution is kept in
+`legit-shell/ORPEN123-NOTICE.md`. `root` (password `legit`) stays available on the other TTYs
 (`Ctrl+Alt+F2`) for rescue.
 
 The session runs as a regular user on purpose: GNOME applications refuse the
@@ -103,6 +106,16 @@ apps get Adwaita-like titlebars through `QT_WAYLAND_DECORATION=adwaita`.
 The dark look and the default apps are applied at login by
 `legit-desktop-init` (`/usr/local/bin`). Plain XWayland apps without native
 decorations stay borderless, as on a bare Wayland compositor.
+
+Terminal windows (GNOME Terminal, GNOME Console, Kitty and common fallbacks)
+receive a dedicated translucent Hyprland rule, so the global Kawase blur shows
+the wallpaper through them while fullscreen terminals remain opaque.
+
+Brightness uses `brightnessctl` whenever a real backlight is exposed. On
+VirtualBox, OLED and external displays without `/sys/class/backlight`, LEGIT
+keeps `hyprsunset` running and uses its Hyprland IPC gamma control as a
+software-brightness fallback. The same daemon also handles Night Light without
+starting a conflicting second instance.
 
 **Icons**: the **Win11** icon theme (faithful Windows 11 icons,
 `yeyushengfan258/Win11-icon-theme`) is used everywhere (Nautilus, LEGIT Shell,
@@ -149,9 +162,12 @@ catcher, so it leaves the menu open.
 ## Testing without rebuilding the ISO
 
 `deploy-vm.sh` copies the desktop config (Hyprland Lua, LEGIT Shell QML, the
-helper scripts, the theme files, the wallpaper) into the **running**
+helper scripts, the Vim/Zsh dotfiles, the theme files and the wallpaper into the **running**
 VirtualBox VM over the Guest Additions control channel, reloads Hyprland and
-starts the shell:
+restarts the shell. Restarting Quickshell is intentional: VirtualBox copy
+operations temporarily replace QML files and otherwise break its file watcher.
+When testing an older live ISO, the script also installs Quickshell into the
+temporary live overlay if the package is absent.
 
 ```bash
 sh deploy-vm.sh        # copy + hyprctl reload + start LEGIT Shell
@@ -171,9 +187,29 @@ curl -sL https://github.com/yeyushengfan258/Win11-icon-theme/archive/a5b460a407d
       -d /usr/share/icons -n Win11
 ```
 
+On Windows, run the script from Git Bash. It disables MSYS argument rewriting
+for `VBoxManage` itself, so guest paths such as `/bin/sh` are not converted to
+host paths.
+
 Note: Hyprland >= 0.57 reads `hyprland.lua` only, the old `hyprland.conf` is
 ignored (hyprlang was dropped), and `hl.env()`/window rules apply to
 processes started after the reload.
+
+## Terminal environment
+
+The live user and root receive the configurations imported from
+`Zibgame/Vim-config` (commit `787bd2d`) and `Zibgame/zsh-config` (commit
+`1a24003`). Oh My Zsh, vim-plug and every Vim plugin declared by that vimrc
+are installed as pinned, shared snapshots under `/usr/share`; Vim therefore
+starts with the complete configuration on first boot without a `PlugInstall`.
+
+`deezer-tui` 1.21.0 is installed in `/usr/local/bin`. The build downloads the
+upstream x86_64 release and verifies its SHA-256 before accepting it.
+
+The security package set also includes the previously missing core access and
+pivoting tools: RustScan, OpenVPN, proxychains-ng, socat, Samba clients,
+FreeRDP and OWASP ZAP. All enabled package names are validated against the
+current Arch repositories during development.
 
 ## Installation on a real machine
 

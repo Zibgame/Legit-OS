@@ -2,8 +2,8 @@
 -- Windows-like floating desktop with GNOME/Adwaita styled windows:
 -- no automatic tiling, rounded corners, native client-side decorations.
 
-local terminal    = "kgx"
-local terminalAlt = "gnome-terminal"
+local terminal    = "legit-terminal"
+local terminalAlt = "legit-terminal --alternate"
 local fileManager = "nautilus"
 local launcher    = "wofi --show drun --insensitive"
 local runDialog   = "wofi --show run --insensitive"
@@ -40,6 +40,9 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("pipewire >/dev/null 2>&1 & sleep 1; wireplumber >/dev/null 2>&1 &")
     hl.exec_cmd("mako")
     hl.exec_cmd("nm-applet --indicator")
+    -- Keep one hyprsunset instance available for both Night Light and the
+    -- software-brightness fallback used on VMs/OLED/external displays.
+    hl.exec_cmd("pgrep -x hyprsunset >/dev/null || hyprsunset >/dev/null 2>&1")
     -- Export the session to D-Bus, then apply the GNOME/Adwaita dark theme and
     -- the default file manager (Nautilus) once the session bus is reachable.
     hl.exec_cmd("sleep 1; dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE; legit-desktop-init")
@@ -73,7 +76,20 @@ hl.config({
         active_opacity   = 1.0,
         inactive_opacity = 1.0,
         shadow = { enabled = true, range = 12, render_power = 3, color = 0x66000000 },
-        blur   = { enabled = true, size = 4, passes = 2 },
+        -- Kawase glass tuned for a VM: two passes keep it smooth while the
+        -- larger radius, dark brightness and restrained vibrancy give menus
+        -- depth without the cost of GNOME Shell extensions.
+        blur = {
+            enabled            = true,
+            size               = 5,
+            passes             = 1,
+            new_optimizations  = true,
+            noise              = 0.008,
+            contrast           = 1.05,
+            brightness         = 0.82,
+            vibrancy           = 0.18,
+            vibrancy_darkness  = 0.15,
+        },
     },
     dwindle = { preserve_split = true },
     misc = {
@@ -100,6 +116,70 @@ hl.animation({ leaf = "workspaces", enabled = true, speed = 4, bezier = "gnomeLi
 ----------------------
 -- Floating-first: every window opens floating (Windows behavior).
 hl.window_rule({ name = "float-all", match = { class = ".*" }, float = true })
+
+-- Frosted terminals. GNOME Terminal and Console no longer expose a native
+-- transparency setting, so Hyprland supplies alpha and blurs the wallpaper
+-- through the resulting surface. Fullscreen remains opaque for readability.
+hl.window_rule({
+    name = "glass-terminals",
+    match = { class = "^(kitty|org\\.gnome\\.Terminal|org\\.gnome\\.Console|Alacritty|foot|org\\.kde\\.konsole)$" },
+    opacity = "0.90 override 0.84 override 1.0 override",
+    rounding = 14,
+})
+
+-- Only the pop-out surfaces receive glass. The taskbar keeps its existing
+-- rendering, layout and exclusive zone exactly as before.
+hl.layer_rule({
+    name = "glass-start-menu",
+    match = { namespace = "^legit-start-menu$" },
+    blur = true,
+    blur_popups = true,
+    ignore_alpha = 0.18,
+})
+hl.layer_rule({
+    name = "glass-quick-settings",
+    match = { namespace = "^legit-quick-settings$" },
+    blur = true,
+    blur_popups = true,
+    ignore_alpha = 0.18,
+})
+-- Frosted glass for the taskbar itself: the translucent surfaces (capsule,
+-- clock pill) blur the wallpaper behind them for the premium ricing look.
+hl.layer_rule({
+    name = "glass-bar",
+    match = { namespace = "^legit-bar$" },
+    blur = true,
+    ignore_alpha = 0.18,
+})
+-- Noctalia-style system popups opened from the right taskbar capsule.
+hl.layer_rule({
+    name = "glass-net-panel",
+    match = { namespace = "^legit-net-panel$" },
+    blur = true,
+    blur_popups = true,
+    ignore_alpha = 0.18,
+})
+hl.layer_rule({
+    name = "glass-bt-panel",
+    match = { namespace = "^legit-bt-panel$" },
+    blur = true,
+    blur_popups = true,
+    ignore_alpha = 0.18,
+})
+hl.layer_rule({
+    name = "glass-vol-panel",
+    match = { namespace = "^legit-vol-panel$" },
+    blur = true,
+    blur_popups = true,
+    ignore_alpha = 0.18,
+})
+hl.layer_rule({
+    name = "glass-cal-panel",
+    match = { namespace = "^legit-cal-panel$" },
+    blur = true,
+    blur_popups = true,
+    ignore_alpha = 0.18,
+})
 -- NOTE: app-initiated maximize is deliberately *not* suppressed, so the GNOME
 -- headerbar double-click (maximize / restore) keeps working.
 -- XWayland drag fix from upstream default config.

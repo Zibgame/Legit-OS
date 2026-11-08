@@ -3,11 +3,21 @@
 
 # Single instance: a second bar would reserve the taskbar height again, which
 # pushes every maximized window up by one extra bar.
-if pgrep -x quickshell >/dev/null 2>&1; then
+if pgrep -u "$(id -u)" -x quickshell >/dev/null 2>&1; then
     exit 0
 fi
 
-# Software rendering: the VirtualBox svga GPU produces invalid EGL buffers.
-export QT_QUICK_BACKEND=software
+# VirtualBox's VMSVGA device needs the software Qt Quick backend. Real
+# hardware keeps GPU acceleration.
+if command -v systemd-detect-virt >/dev/null 2>&1 \
+   && [ "$(systemd-detect-virt)" = "oracle" ]; then
+    export QT_QUICK_BACKEND=software
+fi
 export QT_QPA_PLATFORM=wayland
+
+# Vendored Serpantinum components (Settings panel, wallpaper switcher,
+# music widget with equalizer) resolve their scripts and assets through
+# this root; see legit-shell/serpantinum/NOTICE.md.
+export SERPANTINUM_DIR="$HOME/.config/quickshell/legit-shell/serpantinum"
+export QS_DIR="$SERPANTINUM_DIR/quickshell"
 exec quickshell -p "$HOME/.config/quickshell/legit-shell" >> /var/log/legit-shell.log 2>&1

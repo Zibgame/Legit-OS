@@ -2,6 +2,11 @@
 # Arch Linux container with archiso installed, used by the Makefile.
 FROM docker.io/library/archlinux:latest AS builder
 
-RUN pacman --noconfirm -Sy archlinux-keyring \
-    && pacman --noconfirm -Syu archiso curl \
+# The cached base image can temporarily have a CA bundle older than the live
+# Arch mirrors. Bootstrap over HTTP (packages are still PGP-verified), refresh
+# the trust store, then continue normally.
+RUN printf 'Server = http://geo.mirror.pkgbuild.com/$repo/os/$arch\n' > /etc/pacman.d/mirrorlist \
+    && pacman --noconfirm -Sy archlinux-keyring ca-certificates ca-certificates-mozilla \
+    && update-ca-trust \
+    && pacman --noconfirm -Syu archiso curl git gtk-update-icon-cache \
     && pacman --noconfirm -Scc

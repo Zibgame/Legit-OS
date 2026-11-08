@@ -26,7 +26,6 @@ rustup
 # --- DEV UTILITIES ---
 valgrind
 strace
-xxd
 gawk
 diffutils
 patch

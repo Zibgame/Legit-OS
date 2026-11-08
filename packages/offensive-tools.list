@@ -8,17 +8,21 @@
 # --- RECON / SCAN ---
 nmap
 masscan
+rustscan
 arp-scan
 macchanger
 tcpdump
-dnsutils
 traceroute
 openbsd-netcat
+socat
+proxychains-ng
+openvpn
 
 # --- WEB / APP TESTING ---
 sqlmap
 nikto
 gobuster
+zaproxy
 
 # --- EXPLOIT / FRAMEWORKS ---
 metasploit
@@ -53,6 +57,8 @@ strace
 binutils
 python-pwntools
 python-requests
+samba
+freerdp
 
 # ----------------------------------------------------------------------
 # Not packaged in official repositories (AUR only) - NOT installed.

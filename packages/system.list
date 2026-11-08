@@ -35,6 +35,8 @@ iwd
 wpa_supplicant
 networkmanager
 network-manager-applet
+bluez
+bluez-utils
 dnsmasq
 openssh
 curl
@@ -88,6 +90,9 @@ wl-clipboard
 grim
 slurp
 brightnessctl
+hyprsunset
+upower
+power-profiles-daemon
 xdg-user-dirs
 xdg-user-dirs-gtk
 swaybg
@@ -110,7 +115,7 @@ dconf
 # --- FONTS ---
 noto-fonts
 noto-fonts-emoji
-ttf-jetbrains-mono
+ttf-jetbrains-mono-nerd
 terminus-font
 
 # --- BROWSER / DOCS ---

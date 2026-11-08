@@ -2,13 +2,12 @@
 # curated lists must also include (our packages.x86_64 is generated only
 # from packages/*.list, so anything only in releng would be lost here).
 #
-# - zsh + grml-zsh-config: root's shell on the live CD (pam_shells denies
-#   every login without it, including the tty1 autologin).
+# - zsh: root's shell on the live CD (pam_shells denies every login without
+#   it). The Zibgame .zshrc replaces grml-zsh-config and avoids its file clash.
 # - systemd-resolvconf: resolvconf shim for dhcpdns client plumbing.
 # - mtools / squashfs-tools: mkarchiso & rescue tooling.
 # - reflector refreshes mirrorlists; wireless-regdb = wifi regulatory db.
 zsh
-grml-zsh-config
 systemd-resolvconf
 mtools
 squashfs-tools

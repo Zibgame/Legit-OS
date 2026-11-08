@@ -72,5 +72,11 @@ vm:
 	}; \
 	"$(VB)" storageattach "$(VMNAME)" --storagectl SATA --port 1 --device 0 --type hdd --medium "$$vdiw"; \
 	"$(VB)" storageattach "$(VMNAME)" --storagectl SATA --port 0 --device 0 --type dvddrive --medium "$$isowin"; \
-	echo ">>> Starting VM $(VMNAME)..."; \
-	"$(VB)" startvm "$(VMNAME)" --type gui
+	running=$$("$(VB)" showvminfo "$(VMNAME)" --machinereadable | sed -n 's/^VMState="\([a-z-]*\)".*/\1/p'); \
+	if [ "$$running" = "running" ]; then \
+	  echo ">>> VM $(VMNAME) already running: rebooting into the ISO..."; \
+	  "$(VB)" controlvm "$(VMNAME)" reset; \
+	else \
+	  echo ">>> Starting VM $(VMNAME)..."; \
+	  "$(VB)" startvm "$(VMNAME)" --type gui; \
+	fi

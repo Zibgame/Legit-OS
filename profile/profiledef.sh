@@ -11,7 +11,10 @@ bootmodes=('bios.syslinux'
            'uefi.systemd-boot')
 pacman_conf="pacman.conf"
 airootfs_image_type="squashfs"
-airootfs_image_tool_options=('-comp' 'xz' '-Xbcj' 'x86,arm64' '-b' '1M' '-Xdict-size' '1M')
+# zstd uses all available cores and is dramatically faster than xz for local
+# development builds. Level 6 keeps a reasonable image size without making
+# iteration wait on compression.
+airootfs_image_tool_options=('-comp' 'zstd' '-Xcompression-level' '6' '-b' '1M')
 bootstrap_tarball_compression=('zstd' '-c' '-T0' '--auto-threads=logical' '--long' '-19')
 kernel_params_aarch64="clk_ignore_unused pd_ignore_unused arm64.nopauth"
 file_permissions=(
@@ -30,5 +33,7 @@ file_permissions=(
   ["/usr/local/bin/legit-desktop-init"]="0:0:755"
   ["/usr/local/bin/legit-desktop-check"]="0:0:755"
   ["/usr/local/bin/legit-liveuser-init"]="0:0:755"
+  ["/usr/local/bin/legit-terminal"]="0:0:755"
+  ["/usr/local/bin/deezer-tui"]="0:0:755"
   ["/etc/sudoers.d/10-legit"]="0:0:440"
 )
