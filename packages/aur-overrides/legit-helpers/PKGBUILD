@@ -9,11 +9,11 @@ pkgdesc="LEGIT OS helper scripts (legit-info, legit-vpn, ...)"
 arch=(any)
 license=(MIT)
 depends=(bash)
-source=(legit-info legit-personalize legit-vpn legit-tools-install legit-ai-install)
-sha256sums=(SKIP SKIP SKIP SKIP SKIP)
+source=(legit-info legit-personalize legit-vpn legit-tools-install legit-ai-install legit-terminal)
+sha256sums=(SKIP SKIP SKIP SKIP SKIP SKIP)
 
 package() {
-    for helper in legit-info legit-personalize legit-vpn legit-tools-install legit-ai-install; do
+    for helper in legit-info legit-personalize legit-vpn legit-tools-install legit-ai-install legit-terminal; do
         install -Dm755 "$srcdir/$helper" \
             "$pkgdir/usr/local/bin/$helper"
     done

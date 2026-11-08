@@ -1,0 +1,10 @@
+#!/bin/sh
+# LEGIT OS terminal launcher.
+# kitty needs OpenGL; VirtualBox's virtual GPU (VMSVGA) hands out broken
+# EGL buffers, so force Mesa's software renderer inside VMs. Real hardware
+# keeps GPU acceleration.
+if command -v systemd-detect-virt >/dev/null 2>&1 \
+   && [ "$(systemd-detect-virt)" = "oracle" ]; then
+    export LIBGL_ALWAYS_SOFTWARE=1
+fi
+exec kitty "$@"

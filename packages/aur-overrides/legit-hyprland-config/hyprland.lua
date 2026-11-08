@@ -12,7 +12,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("swaybg -i /usr/share/backgrounds/legit/ocean-balcony.jpeg -m fill")
 end)
 
-local terminal = "kitty"
+local terminal = "legit-terminal"
 
 -- Essentials
 hl.bind("CTRL + ALT + T",    hl.dsp.exec_cmd(terminal))
