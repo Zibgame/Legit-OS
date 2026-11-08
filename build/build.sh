@@ -84,12 +84,8 @@ if grep -qx '@nerd-fonts' "$PROFILE_DIR/packages.x86_64"; then
     pacman -Sgq nerd-fonts >> "$PROFILE_DIR/packages.x86_64"
     sort -u -o "$PROFILE_DIR/packages.x86_64" "$PROFILE_DIR/packages.x86_64"
 
-# Data-heavy wordlists (seclists ~2GB, wordlists ~700MB) stay OUT of the live
-# environment to keep the squashfs and the ISO small enough for the build
-# disk: they remain in the embedded legit-aur repository, so every installed
-# system still receives them through legit-install.  The same applies to the
-# heavyweight desktop applications (burpsuite, code, chromium).
-sed -i '/^seclists$/d; /^wordlists$/d; /^burpsuite$/d; /^code$/d; /^chromium$/d' "$PROFILE_DIR/packages.x86_64"
+# Espace disque restaure par l'utilisateur (~370 Go liberes) : plus besoin
+# d'exclure les gros paquets du live. Tout est dans l'ISO.
 fi
 
 # 4b. Build the maintained HTB tools which Arch does not package officially.
