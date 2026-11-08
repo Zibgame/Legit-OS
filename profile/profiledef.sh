@@ -14,7 +14,10 @@ airootfs_image_type="squashfs"
 # zstd uses all available cores and is dramatically faster than xz for local
 # development builds. Level 6 keeps a reasonable image size without making
 # iteration wait on compression.
-airootfs_image_tool_options=('-comp' 'zstd' '-Xcompression-level' '6' '-b' '1M')
+# xz compresses several GB tighter than zstd: the work-directory peak
+# (installed root + growing squashfs) repeatedly filled the build disk.
+# Slower, but it lets the whole build fit.
+airootfs_image_tool_options=('-comp' 'xz' '-b' '1M')
 bootstrap_tarball_compression=('zstd' '-c' '-T0' '--auto-threads=logical' '--long' '-19')
 kernel_params_aarch64="clk_ignore_unused pd_ignore_unused arm64.nopauth"
 file_permissions=(

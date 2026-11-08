@@ -378,7 +378,7 @@ fi
 # 6. Build the ISO.
 # -c xz: the slower compressor shrinks the squashfs by several GB, which
 # keeps the peak work-directory footprint small enough for the build disk.
-mkarchiso -v -c xz -C "$BUILD_PACMAN_CONF" -w "$WORK_DIR" -o "$OUT_DIR" "$PROFILE_DIR"
+mkarchiso -v -C "$BUILD_PACMAN_CONF" -w "$WORK_DIR" -o "$OUT_DIR" "$PROFILE_DIR"
 
 echo
 echo "==================================================================="
