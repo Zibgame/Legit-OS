@@ -254,6 +254,9 @@ ROBUST_DLAGENTS
                     python-bloodhound-ce)
                         pacman --noconfirm --needed -S python-installer
                         ;;
+                    legit-ai-cli)
+                        pacman --noconfirm --needed -S nodejs npm
+                        ;;
                 esac
                 # Runtime dependencies may themselves live in the local AUR
                 # repository and need not be installed merely to package an
