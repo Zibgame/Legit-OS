@@ -53,7 +53,14 @@ tar -C "$SRC_DIR/branding" -cf - . | tar -C "$PROFILE_DIR/airootfs" -xf -
 mkdir -p "$PROFILE_DIR/airootfs/etc/archinstall"
 tar -C "$SRC_DIR/archinstall" -cf - . | tar -C "$PROFILE_DIR/airootfs/etc/archinstall" -xf -
 # Convenience CLI helpers.  The Windows checkout loses executable bits.
-tar -C "$SRC_DIR/tools" -cf - . | tar -C "$PROFILE_DIR/airootfs/usr/local/bin" -xf -
+# The five legit-* helper scripts ship as the legit-helpers package (also
+# installed on target systems); copying them here as well would make
+# mkarchiso fail on conflicting files.  legit-install stays airootfs-only:
+# it is the live environment's installer launcher.
+tar -C "$SRC_DIR/tools" \
+    --exclude=legit-info --exclude=legit-personalize --exclude=legit-vpn \
+    --exclude=legit-tools-install --exclude=legit-ai-install \
+    -cf - . | tar -C "$PROFILE_DIR/airootfs/usr/local/bin" -xf -
 chmod 755 "$PROFILE_DIR"/airootfs/usr/local/bin/*
 install -Dm644 "$SRC_DIR/packages/aur-tools.list" \
     "$PROFILE_DIR/airootfs/usr/share/legit/aur-tools.list"
