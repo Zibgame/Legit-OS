@@ -87,8 +87,9 @@ if grep -qx '@nerd-fonts' "$PROFILE_DIR/packages.x86_64"; then
 # Data-heavy wordlists (seclists ~2GB, wordlists ~700MB) stay OUT of the live
 # environment to keep the squashfs and the ISO small enough for the build
 # disk: they remain in the embedded legit-aur repository, so every installed
-# system still receives them through legit-install.
-sed -i '/^seclists$/d; /^wordlists$/d' "$PROFILE_DIR/packages.x86_64"
+# system still receives them through legit-install.  The same applies to the
+# heavyweight desktop applications (burpsuite, code, chromium).
+sed -i '/^seclists$/d; /^wordlists$/d; /^burpsuite$/d; /^code$/d; /^chromium$/d' "$PROFILE_DIR/packages.x86_64"
 fi
 
 # 4b. Build the maintained HTB tools which Arch does not package officially.
@@ -320,9 +321,9 @@ ROBUST_DLAGENTS
 
 [legit-aur]
 # These artifacts are compiled locally in this same build and are not signed.
-# `Optional` still asks Pacman for every missing .sig file; with the resilient
-# curl retry policy that adds minutes of pointless retries. Never request
-# signatures from this ephemeral file:// repository.
+# SigLevel Never: Optional would still make pacman request every missing .sig
+# file; with the resilient curl retry policy that adds minutes of pointless
+# retries. Never request signatures from this ephemeral file:// repository.
 SigLevel = Never
 Server = file://$AUR_REPO
 EOF
@@ -356,7 +357,6 @@ netexec
 impacket
 metasploit
 python-pwntools
-seclists
 peass-ng
 vim-nerdtree
 vim-devicons
