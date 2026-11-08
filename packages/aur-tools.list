@@ -21,6 +21,8 @@ amass
 # covered by ffuf, feroxbuster and gobuster.
 wafw00f
 whatweb
+python-dicttoxml
+python-ratelimit
 arjun
 dalfox-bin
 

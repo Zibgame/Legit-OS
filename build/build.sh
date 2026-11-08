@@ -244,6 +244,13 @@ ROBUST_DLAGENTS
         -type f -name '*.pkg.tar.zst' ! -name '*-debug-*.pkg.tar.zst' \
         -exec cp -f '{}' "$AUR_REPO/" \;
     find "$AUR_REPO" -maxdepth 1 -type f -name '*-debug-*.pkg.tar.zst' -delete
+    # Persist everything, dependencies included: cached targets skip their
+    # paru run entirely, so their AUR-only dependencies must come back from
+    # the cache for the repository to stay a complete dependency closure.
+    if [ -d "$AUR_CACHE" ]; then
+        find "$AUR_REPO" -maxdepth 1 -type f -name '*.pkg.tar.zst' \
+            -exec cp -f '{}' "$AUR_CACHE/" \;
+    fi
     find "$AUR_CACHE" -maxdepth 1 -type f -name '*-debug-*.pkg.tar.zst' -delete 2>/dev/null || true
     repo-add "$AUR_REPO/legit-aur.db.tar.gz" "$AUR_REPO"/*.pkg.tar.zst
 
