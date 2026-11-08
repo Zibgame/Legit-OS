@@ -15,7 +15,7 @@ cp "$work_dir/package/"*.pkg.tar.zst "$work_dir/repo/"
 repo-add "$work_dir/repo/legit-aur.db.tar.gz" "$work_dir/repo/"*.pkg.tar.zst
 
 cp /etc/pacman.conf "$work_dir/pacman.conf"
-printf '\n[legit-aur]\nSigLevel = Optional TrustAll\nServer = file://%s\n' \
+printf '\n[legit-aur]\nSigLevel = Never\nServer = file://%s\n' \
     "$work_dir/repo" >> "$work_dir/pacman.conf"
 
 pacstrap -C "$work_dir/pacman.conf" -K "$work_dir/target" legit-offline-test

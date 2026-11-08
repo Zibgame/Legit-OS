@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# legit-vpn - run or import an OpenVPN profile.
+set -euo pipefail
+
+usage() {
+    echo "Usage: legit-vpn [--import] PROFILE.ovpn" >&2
+    echo "  default: connect in the terminal; --import: add to NetworkManager" >&2
+}
+
+MODE=connect
+if [[ "${1:-}" == "--import" ]]; then
+    MODE=import
+    shift
+fi
+[[ $# -eq 1 ]] || { usage; exit 2; }
+PROFILE="$1"
+[[ -r "$PROFILE" ]] || { echo "ERROR: cannot read $PROFILE" >&2; exit 1; }
+
+if [[ "$MODE" == import ]]; then
+    command -v nmcli >/dev/null || { echo "ERROR: nmcli is not installed." >&2; exit 1; }
+    nmcli connection import type openvpn file "$PROFILE"
+    echo "Profile imported. Connect it from NetworkManager or with nmcli connection up NAME."
+else
+    command -v openvpn >/dev/null || { echo "ERROR: openvpn is not installed." >&2; exit 1; }
+    exec sudo openvpn --config "$PROFILE"
+fi

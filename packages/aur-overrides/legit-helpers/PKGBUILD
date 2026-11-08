@@ -1,0 +1,18 @@
+# Maintained locally by build/build.sh - not published to the AUR.
+# Installs the LEGIT OS helper scripts into /usr/local/bin on the installed
+# system: the same helpers the live environment ships (tool inventory, VPN
+# profile manager, wallpaper helper, selective tool deployment).
+pkgname=legit-helpers
+pkgver=2026.11.08
+pkgrel=1
+pkgdesc="LEGIT OS helper scripts (legit-info, legit-vpn, ...)"
+arch=(any)
+license=(MIT)
+depends=(bash)
+
+package() {
+    for helper in legit-info legit-personalize legit-vpn legit-tools-install legit-ai-install; do
+        install -Dm755 "$srcdir/$helper" \
+            "$pkgdir/usr/local/bin/$helper"
+    done
+}

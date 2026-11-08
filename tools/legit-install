@@ -57,7 +57,7 @@ fi
 if [[ -z "$DESKTOP" ]]; then
     echo "LEGIT OS - choose the desktop to install:"
     PS3="Choice [1-5]: "
-    select choice in "GNOME" "Hyprland (clean, no LEGIT config)" "KDE Plasma" "XFCE" "None (terminal only)"; do
+    select choice in "GNOME" "Hyprland (minimal: wallpaper only)" "KDE Plasma" "XFCE" "None (terminal only)"; do
         case "$REPLY" in
             1) DESKTOP=gnome; break ;;
             2) DESKTOP=hyprland; break ;;
@@ -82,6 +82,13 @@ done
 
 command -v jq >/dev/null || { echo "ERROR: jq is required by legit-install." >&2; exit 1; }
 command -v pacman >/dev/null || { echo "ERROR: pacman is required by legit-install." >&2; exit 1; }
+
+# The live environment ships without synced pacman databases; the package
+# assembly below queries them (pacman -Sgq nerd-fonts), so refresh first.
+pacman -Sy --noconfirm >/dev/null 2>&1 || {
+    echo "ERROR: pacman -Sy failed - cannot read repository databases." >&2
+    exit 1
+}
 
 TMP_CONFIG="$(mktemp --suffix=.json legit-archinstall.XXXXXX)"
 TMP_PACKAGES="$(mktemp legit-packages.XXXXXX)"
@@ -152,7 +159,7 @@ if [[ -s "$SHARE_DIR/aur-tools.list" ]]; then
 
 # LEGIT-AUR-BEGIN
 [legit-aur]
-SigLevel = Optional TrustAll
+SigLevel = Never
 Server = file://$AUR_REPO
 # LEGIT-AUR-END
 EOF

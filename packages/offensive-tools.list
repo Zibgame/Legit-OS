@@ -42,6 +42,13 @@ postgresql
 # --- EXPLOITATION / POST-EXPLOITATION ---
 metasploit
 exploitdb
+sshuttle
+stunnel
+lynis
+rkhunter
+nbtscan
+testssl.sh
+sslscan
 
 # --- PASSWORD ATTACKS ---
 hydra
@@ -52,6 +59,11 @@ hashcat
 # --- WIRELESS / SNIFFING / MITM ---
 aircrack-ng
 bettercap
+wifite
+reaver
+ettercap
+dsniff
+p0f
 wireshark-qt
 wireshark-cli
 

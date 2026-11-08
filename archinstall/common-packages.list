@@ -13,6 +13,7 @@ vim
 vim-nerdtree
 vim-devicons
 tmux
+zsh
 btop
 htop
 ripgrep

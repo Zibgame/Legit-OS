@@ -1,9 +1,11 @@
+# Minimal Hyprland desktop: the compositor, a terminal and the desktop
+# plumbing only. No bar, launcher or file manager is imposed - users bring
+# their own dotfiles. legit-hyprland-config (AUR build) provides the
+# wallpaper-only configuration that keeps Hyprland from showing its
+# "using default config" banner.
 hyprland
-dunst
 kitty
-uwsm
-dolphin
-wofi
+swaybg
 xdg-desktop-portal-hyprland
 xdg-desktop-portal-gtk
 qt5-wayland

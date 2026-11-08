@@ -31,6 +31,9 @@ arch-install-scripts
 archinstall
 
 # --- NETWORK ---
+# ca-certificates is required for all HTTPS mirror access from the live
+# environment (curl depends on it being present for TLS verification).
+ca-certificates
 iwd
 wpa_supplicant
 networkmanager

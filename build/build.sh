@@ -16,9 +16,13 @@ OUT_DIR="${OUT_DIR:-/legit-os/out}"
 # 0. Use proper HTTPS mirrors at build time.  The builder image ships a plain
 #    HTTP bootstrap mirror which does not support byte ranges, so a partially
 #    downloaded package can never resume after an aborted run.
+#    america.mirror.pkgbuild.com is deliberately absent: the corporate AV's
+#    DNS filtering never resolves it, which used to kill whole transactions.
 cat > /etc/pacman.d/mirrorlist <<'MIRRORS'
 Server = https://geo.mirror.pkgbuild.com/$repo/os/$arch
-Server = https://america.mirror.pkgbuild.com/$repo/os/$arch
+Server = https://mirror.osbeck.com/archlinux/$repo/os/$arch
+Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch
+Server = https://mirrors.kernel.org/archlinux/$repo/os/$arch
 MIRRORS
 # Harden transfers as well: pacman's internal downloader gives up after
 # one attempt with a 10 s timeout, which slow mirrors abort mid-transaction.
@@ -162,7 +166,11 @@ ROBUST_DLAGENTS
             while read -r dep; do
                 [ -n "$dep" ] || continue
                 dep=${dep%%[><=]*}
-                pacman -Si "$dep" >/dev/null 2>&1 && continue
+                # `pacman -Si` only accepts exact package names, whereas many
+                # packages depend on virtual capabilities such as
+                # `java-runtime`.  Ask the resolver instead so valid cached
+                # artifacts are not rebuilt on every container restart.
+                pacman -Sp --noconfirm --print-format '%n' "$dep" >/dev/null 2>&1 && continue
                 find "$AUR_REPO" -maxdepth 1 -type f \
                     -name "$dep-*.pkg.tar.zst" ! -name "$dep-debug-*.pkg.tar.zst" \
                     -print -quit | grep -q . && continue
@@ -268,9 +276,12 @@ ROBUST_DLAGENTS
         fi
     done
 
+    # Collect artifacts produced in this run (targets and AUR-only
+    # dependencies).  A fully-cached run never creates the clone directory,
+    # so a missing path is normal here, not an error.
     find /home/aurbuilder/.cache/paru/clone /tmp/paru-bin \
         -type f -name '*.pkg.tar.zst' ! -name '*-debug-*.pkg.tar.zst' \
-        -exec cp -f '{}' "$AUR_REPO/" \;
+        -exec cp -f '{}' "$AUR_REPO/" \; 2>/dev/null || true
     find "$AUR_REPO" -maxdepth 1 -type f -name '*-debug-*.pkg.tar.zst' -delete
     # Persist everything, dependencies included: cached targets skip their
     # paru run entirely, so their AUR-only dependencies must come back from
@@ -292,7 +303,11 @@ ROBUST_DLAGENTS
     cat >> "$BUILD_PACMAN_CONF" <<EOF
 
 [legit-aur]
-SigLevel = Optional TrustAll
+# These artifacts are compiled locally in this same build and are not signed.
+# `Optional` still asks Pacman for every missing .sig file; with the resilient
+# curl retry policy that adds minutes of pointless retries. Never request
+# signatures from this ephemeral file:// repository.
+SigLevel = Never
 Server = file://$AUR_REPO
 EOF
 else

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# legit-info - quick environment baseline for LEGIT OS.
+set -euo pipefail
+
+echo "============================================================"
+echo "LEGIT OS - Trust me, it's legit."
+echo "============================================================"
+echo
+echo "Kernel    : $(uname -r)"
+echo "Arch      : $(uname -m)"
+echo "Uptime    : $(uptime -p 2>/dev/null || echo unknown)"
+echo "Session   : ${XDG_SESSION_TYPE:-tty}${WAYLAND_DISPLAY:+ ($WAYLAND_DISPLAY)}"
+echo
+echo "Pentest tooling available:"
+for tool in nmap rustscan ffuf feroxbuster nuclei subfinder httpx naabu \
+            sqlmap netexec impacket-smbserver bloodhound-ce-python certipy \
+            responder evil-winrm-py ligolo-ng chisel burpsuite metasploit hashcat \
+            wireshark ghidra gdb pwndbg binwalk volatility3; do
+    command -v "$tool" >/dev/null 2>&1 \
+        && printf '  [x] %s -> %s\n' "$tool" "$(command -v "$tool")" \
+        || printf '  [ ] %s\n' "$tool"
+done
+echo
+echo "Installer : legit-install  (Archinstall + desktop choice)"
+echo "VPN       : legit-vpn PROFILE.ovpn  (or --import for NetworkManager)"
+echo "Toolkit   : legit-tools-install (complete an installed Arch system)"
+echo "Wallpaper : legit-personalize (optional; preserves desktop dotfiles)"
+echo "Docs      : Installation_guide"

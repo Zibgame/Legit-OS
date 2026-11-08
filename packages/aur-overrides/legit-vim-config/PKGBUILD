@@ -1,0 +1,18 @@
+# Maintained locally by build/build.sh - not published to the AUR.
+# Ships the LEGIT OS default .vimrc into /etc/skel so every newly created
+# user gets a working Vim with NERDTree, vim-devicons and vim-plug (the
+# plugins themselves are system-wide packages). Users are free to overwrite
+# ~/.vimrc with their own dotfiles.
+pkgname=legit-vim-config
+pkgver=2026.11.08
+pkgrel=1
+pkgdesc="LEGIT OS default Vim configuration for new users"
+arch=(any)
+license=(MIT)
+depends=(vim)
+source=(.vimrc)
+sha256sums=(SKIP)
+
+package() {
+    install -Dm644 "$srcdir/.vimrc" "$pkgdir/etc/skel/.vimrc"
+}

@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Install the complete LEGIT toolkit on an existing Arch system.
+# This script installs packages only; it never reads or writes user dotfiles.
+set -euo pipefail
+
+if [[ $EUID -eq 0 ]]; then
+    echo "Run this command as your normal user; sudo is used only for Pacman." >&2
+    exit 1
+fi
+
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+if [[ -r /usr/share/legit/aur-tools.list ]]; then
+    manifest_dir=/usr/share/legit
+else
+    manifest_dir=$(cd -- "$script_dir/../packages" && pwd)
+fi
+aur_list="$manifest_dir/aur-tools.list"
+
+if [[ ! -r "$aur_list" ]]; then
+    echo "ERROR: LEGIT package manifests are missing from $manifest_dir" >&2
+    exit 1
+fi
+
+mapfile -t official_packages < <(
+    {
+        cat "$manifest_dir"/{offensive-tools,dev-tools}.list
+        printf '%s\n' vim vim-nerdtree vim-devicons noto-fonts noto-fonts-emoji
+    } | grep -v '^\s*#' | sed '/^\s*$/d' | sort -u
+)
+mapfile -t aur_packages < <(
+    grep -v '^\s*#' "$aur_list" | sed '/^\s*$/d'
+)
+
+sudo pacman -Syu --needed --noconfirm "${official_packages[@]}"
+sudo pacman -S --needed --noconfirm nerd-fonts
+
+if ! command -v paru >/dev/null 2>&1; then
+    workdir=$(mktemp -d)
+    trap 'rm -rf "$workdir"' EXIT
+    git clone --depth 1 https://aur.archlinux.org/paru-bin.git "$workdir/paru-bin"
+    (cd "$workdir/paru-bin" && makepkg -si --noconfirm --needed)
+fi
+
+paru -S --needed --noconfirm --skipreview "${aur_packages[@]}"
+
+echo "LEGIT toolkit installed. No .zshrc, .vimrc or desktop config was changed."

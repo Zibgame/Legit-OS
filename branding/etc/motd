@@ -1,19 +1,23 @@
 
-             _          _          _
-     ___    | |   ___  | |   ___  | |   ___     "Trust me, it's legit."
-    |___|   | |  / . | | |  / . |  |__ / . |        - LEGIT OS live
-            |_|  |_|_| |_|  |_|_|     |_|_|_|
+[1;96m██▓    ▓█████   ▄████  ██▓▄▄▄█████▓    ▒█████    ██████[0m
+[1;94m▓██▒    ▓█   ▀  ██▒ ▀█▒▓██▒▓  ██▒ ▓▒   ▒██▒  ██▒▒██    ▒[0m
+[1;96m▒██░    ▒███   ▒██░▄▄▄░▒██▒▒ ▓██░ ▒░   ▒██░  ██▒░ ▓██▄[0m
+[1;94m▒██░    ▒▓█  ▄ ░▓█  ██▓░██░░ ▓██▓ ░    ▒██   ██░  ▒   ██▒[0m
+[1;96m░██████▒░▒████▒░▒▓███▀▒░██░  ▒██▒ ░    ░ ████▓▒░▒██████▒▒[0m
+[1;94m░ ▒░▓  ░░░ ▒░ ░ ░▒   ▒ ░▓    ▒ ░░      ░ ▒░▒░▒░ ▒ ▒▓▒ ▒ ░[0m
+[1;96m░ ░ ▒  ░ ░ ░  ░  ░   ░  ▒ ░    ░         ░ ▒ ▒░ ░ ░▒  ░ ░[0m
+[1;94m  ░ ░      ░   ░  ░      ░  ░                  ░ ░        ░[0m
+[1;96m    ░  ░   ░  ░      ░  ░                  ░ ░        ░[0m
+[1;33m                  "Trust me, it's legit."[0m
 
-  Offensive Security - Penetration Testing / Red Teaming / Exploit Dev /
-  Reverse Engineering / Vulnerability Research
+  [1mOffensive Security Distribution[0m [0;90m|[0m [1m75[0m offensive tools - recon / exploitation / AD / forensics / RE
 
-  - Connect to Wi-Fi with       iwctl
-  - SSH from host               ssh root@<ip>  (password: legit)
-  - Security tool inventory     legit-info
-  - Optional wallpaper helper   legit-personalize
-  - Launch the installer        legit-install  (choose GNOME/Hyprland/KDE/XFCE)
-  - Connect an OpenVPN profile  legit-vpn lab.ovpn
+  [0;90mCOMMANDS[0m
+  [1;32mlegit-install         [0m guided installer (GNOME / Hyprland / KDE / XFCE)
+  [1;32mlegit-info            [0m arsenal inventory and environment audit
+  [1;32mlegit-tools-install   [0m selective toolchain deployment
+  [1;32mlegit-ai-install      [0m AI-assisted tooling
+  [1;32mlegit-vpn             [0m OpenVPN profile manager
+  [1;32mlegit-personalize     [0m branding and wallpaper helper
 
-  Desktop environment and dotfiles are intentionally left to the user.
-
-  Authorized security research only. Offensive by design.
+  [1;31mAuthorized security research only. Offensive by design.[0m

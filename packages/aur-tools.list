@@ -31,6 +31,9 @@ enum4linux-ng
 # netexec stable, not netexec-git: the git package requires
 # python-asyauth>=0.0.25 but the AUR package is frozen at 0.0.21.
 netexec
+smbmap
+kerbrute-bin
+powershell-bin
 responder
 python-ldap3-ad-auth
 python-bloodhound-ce
@@ -42,9 +45,26 @@ chisel-bin
 peass-ng
 pspy-bin
 
+# --- OSINT / AUDIT ---
+sherlock
+netdiscover
+# patator removed: its AUR PKGBUILD requires python-deadlib, a package that
+# no longer exists on the AUR, so it can never resolve.  Brute-force
+# coverage stays on hydra and medusa.
+
 # --- WORDLISTS / PROXY / MOBILE / STEGO ---
 seclists
 wordlists
 burpsuite
 android-apktool-bin
 steghide
+
+# --- DESKTOP / CONFIG / FUN ---
+# Shipped as local packages (see packages/aur-overrides/) so the installed
+# system receives the wallpaper-only Hyprland default, the working Vim stack
+# and the LEGIT helpers without imposing any other configuration.
+legit-hyprland-config
+legit-vim-config
+legit-helpers
+vim-plug
+deezer-tui-bin
