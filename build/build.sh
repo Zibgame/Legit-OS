@@ -17,10 +17,14 @@ OUT_DIR="${OUT_DIR:-/legit-os/out}"
 #    HTTP bootstrap mirror which does not support byte ranges, so a partially
 #    downloaded package can never resume after an aborted run.
 cat > /etc/pacman.d/mirrorlist <<'MIRRORS'
-Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch
 Server = https://geo.mirror.pkgbuild.com/$repo/os/$arch
 Server = https://america.mirror.pkgbuild.com/$repo/os/$arch
 MIRRORS
+# Harden transfers as well: pacman's internal downloader gives up after
+# one attempt with a 10 s timeout, which slow mirrors abort mid-transaction.
+# curl retries with backoff and resumes partial downloads instead.
+hardened_xfer='XferCommand = /usr/bin/curl --connect-timeout 30 --retry 8 --retry-delay 5 --retry-all-errors -C - -f -L -o %o %u'
+sed -i "/^\[options\]$/a $hardened_xfer" /etc/pacman.conf
 # Drop stale partial downloads left by crashed runs.
 find /var/cache/pacman/pkg -name '*.part' -delete 2>/dev/null || true
 
@@ -294,6 +298,10 @@ EOF
 else
     cp "$PROFILE_DIR/pacman.conf" "$BUILD_PACMAN_CONF"
 fi
+# The same resilient transfer settings for the final ISO assembly: mkarchiso
+# installs the entire package set through this configuration and the Nerd
+# Fonts alone are dozens of fresh downloads at every version bump.
+sed -i "/^\[options\]$/a $hardened_xfer" "$BUILD_PACMAN_CONF"
 
 # 5. Sanity check: mkinitcpio-archiso is mandatory for a bootable ISO.
 if ! grep -qx 'mkinitcpio-archiso' "$PROFILE_DIR/packages.x86_64"; then
