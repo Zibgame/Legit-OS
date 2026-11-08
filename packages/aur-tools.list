@@ -35,6 +35,7 @@ responder
 python-ldap3-ad-auth
 python-bloodhound-ce
 python-certipy-nxc
+python-pypsrp
 evil-winrm-py
 ligolo-ng
 chisel-bin

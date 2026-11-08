@@ -144,11 +144,35 @@ ROBUST_DLAGENTS
     pacman --noconfirm -U /tmp/paru-bin/*.pkg.tar.zst
 
     for package in "${AUR_PACKAGES[@]}"; do
-        if find "$AUR_REPO" -maxdepth 1 -type f \
+        artifact=$(find "$AUR_REPO" -maxdepth 1 -type f \
             -name "$package-*.pkg.tar.zst" ! -name "$package-debug-*.pkg.tar.zst" \
-            -print -quit | grep -q .; then
-            echo ">>> Skipping already compiled AUR package: $package"
-            continue
+            -print -quit)
+        if [ -n "$artifact" ]; then
+            # Verify the dependency closure of the cached artifact: every
+            # declared dependency must resolve in an official repository or
+            # in the local one.  Cached targets whose paru run is skipped
+            # never rebuild their own dependencies, so an incomplete cache
+            # would otherwise surface as a mkarchiso install failure.
+            artifact_name=${artifact##*/}
+            closure_ok=1
+            while read -r dep; do
+                [ -n "$dep" ] || continue
+                dep=${dep%%[><=]*}
+                pacman -Si "$dep" >/dev/null 2>&1 && continue
+                find "$AUR_REPO" -maxdepth 1 -type f \
+                    -name "$dep-*.pkg.tar.zst" ! -name "$dep-debug-*.pkg.tar.zst" \
+                    -print -quit | grep -q . && continue
+                echo ">>> $artifact_name misses dependency '$dep'; forcing rebuild"
+                closure_ok=0
+            done < <(tar -xOf "$artifact" .PKGINFO 2>/dev/null | sed -n 's/^depend = //p')
+            if ((closure_ok)); then
+                echo ">>> Skipping already compiled AUR package: $package"
+                continue
+            fi
+            rm -f "$AUR_REPO/$artifact_name"
+            if [ -d "$AUR_CACHE" ]; then
+                rm -f "$AUR_CACHE/$artifact_name"
+            fi
         fi
         echo ">>> Building maintained AUR security tool: $package"
         # Pre-import the PGP fingerprints the PKGBUILD validates against so
