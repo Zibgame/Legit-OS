@@ -11,13 +11,18 @@ echo "Arch      : $(uname -m)"
 echo "Uptime    : $(uptime -p 2>/dev/null || echo unknown)"
 echo "Session   : ${XDG_SESSION_TYPE:-tty}${WAYLAND_DISPLAY:+ ($WAYLAND_DISPLAY)}"
 echo
-echo "Offensive tooling available:"
-for tool in nmap sqlmap nikto hydra john hashcat aircrack-ng \
-            ghidra radare2 gdb metasploit binwalk bettercap; do
+echo "Pentest tooling available:"
+for tool in nmap rustscan ffuf feroxbuster nuclei subfinder httpx naabu \
+            sqlmap netexec impacket-smbserver bloodhound-ce-python certipy \
+            responder evil-winrm-py ligolo-ng chisel burpsuite metasploit hashcat \
+            wireshark ghidra gdb pwndbg binwalk volatility3; do
     command -v "$tool" >/dev/null 2>&1 \
         && printf '  [x] %s -> %s\n' "$tool" "$(command -v "$tool")" \
         || printf '  [ ] %s\n' "$tool"
 done
 echo
-echo "Installer : legit-install  (Archinstall + LEGIT preset)"
+echo "Installer : legit-install  (Archinstall + desktop choice)"
+echo "VPN       : legit-vpn PROFILE.ovpn  (or --import for NetworkManager)"
+echo "Toolkit   : legit-tools-install (complete an installed Arch system)"
+echo "Wallpaper : legit-personalize (optional; preserves desktop dotfiles)"
 echo "Docs      : Installation_guide"

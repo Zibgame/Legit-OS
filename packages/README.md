@@ -1,15 +1,15 @@
 # LEGIT OS package lists
 
-`build/build.sh` concatenates both lists (after stripping comments and blank
-lines) into `packages.x86_64` inside the archiso profile used at build time.
+`build/build.sh` converts these lists into Archiso's `packages.x86_64`:
 
-- `system.list` — Arch base, firmware, boot, networking, Hyprland desktop
-  stack, GNOME/libadwaita integration (Nautilus, GNOME Terminal, Adwaita
-  dark theme), fonts, utilities.
-- `offensive-tools.list` — offensive security tools available in the **official
-  Arch repositories only** (no personal Pacman repository, no AUR at build
-  time). AUR candidates are listed commented-out at the bottom.
-- `dev-tools.list` — toolchain (base-devel, clang, cmake, python, node, rust),
-  editors, QEMU and `archiso` so the OS can rebuild its own ISO (self-hosting).
+- `system.list`: bootable Arch base, networking, browsers and terminal/editor
+  compatibility. `@nerd-fonts` expands to every package in Arch's official
+  `nerd-fonts` group.
+- `offensive-tools.list`: maintained security tools from official Arch repos.
+- `aur-tools.list`: important modern HTB tools absent from official repos.
+  They are built as an unprivileged user into a temporary local Pacman repo.
+- `dev-tools.list`: compilers and utilities useful for exploit development.
+- `releng-essentials.list`: packages required by Archiso's live environment.
 
-Both files: one package per line, `#` comments allowed, blank lines ignored.
+The lists do not install a desktop environment and do not contain dotfiles.
+One package appears per line; comments and blank lines are ignored.

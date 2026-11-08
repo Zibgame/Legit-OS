@@ -1,4 +1,0 @@
-#!/bin/sh
-# LEGIT OS - send a command to LEGIT Shell (Quickshell) via its event file.
-RT="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-echo "$*" >> "$RT/legit-shell.events" 2>/dev/null

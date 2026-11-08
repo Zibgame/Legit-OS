@@ -1,0 +1,12 @@
+gnome
+gnome-tweaks
+gdm
+# Full GNOME terminal selection: classic, minimal and container-oriented.
+gnome-terminal
+gnome-console
+ptyxis
+pipewire
+pipewire-audio
+pipewire-pulse
+wireplumber
+rtkit

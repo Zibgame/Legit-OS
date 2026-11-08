@@ -1,2 +1,0 @@
-# LEGIT OS - let the live desktop user install packages.
-%wheel ALL=(ALL:ALL) ALL

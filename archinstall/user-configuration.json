@@ -1,31 +1,28 @@
 {
-    "keyboard_language": "us",
-    "github_account": null,
-    "ntp": true,
+    "archinstall-language": "English",
     "hostname": "legit-os",
-    "locale_config": {
-        "sys_lang": "en_US.UTF-8",
-        "sys_enc": "UTF-8"
-    },
-    "kernels": ["linux"],
-    "bootloader": "systemd-boot",
-    "audio": "pipewire",
-    "packages": [
-        "base", "linux", "linux-firmware", "linux-headers", "base-devel",
-        "networkmanager", "openssh", "sudo",
-        "grub", "efibootmgr",
-        "hyprland", "waybar", "wofi", "kitty", "quickshell", "mako",
-        "polkit-gnome", "swaybg", "gnome-terminal", "nautilus",
-        "pipewire", "wireplumber", "xdg-desktop-portal-hyprland",
-        "noto-fonts", "noto-fonts-emoji", "ttf-jetbrains-mono-nerd",
-        "git", "vim", "tmux", "htop",
-        "clang", "cmake", "meson", "ninja", "python-pip", "nodejs", "rustup",
-        "valgrind", "code", "qemu-desktop",
-        "nmap", "rustscan", "sqlmap", "nikto", "hydra", "john", "hashcat",
-        "aircrack-ng", "wireshark-qt", "metasploit",
-        "radare2", "gdb", "ghidra", "zaproxy", "proxychains-ng",
-        "openvpn", "socat", "samba", "freerdp",
-        "archiso", "arch-install-scripts"
+    "kernels": [
+        "linux"
     ],
-    "services": ["NetworkManager"]
+    "locale_config": {
+        "kb_layout": "fr",
+        "sys_enc": "UTF-8",
+        "sys_lang": "fr_FR.UTF-8"
+    },
+    "network_config": {
+        "type": "nm"
+    },
+    "no_pkg_lookups": false,
+    "ntp": true,
+    "packages": [],
+    "pacman_config": {
+        "parallel_downloads": 12
+    },
+    "profile_config": null,
+    "script": "guided",
+    "services": [
+        "NetworkManager",
+        "sshd"
+    ],
+    "timezone": "Europe/Paris"
 }

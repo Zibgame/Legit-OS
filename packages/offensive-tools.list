@@ -1,69 +1,81 @@
-# LEGIT OS offensive security tools
-# One package per line. Lines starting with '#' and blank lines are ignored.
-# IMPORTANT: only packages available in the official Arch repositories are
-# listed here. Tools requiring the AUR are intentionally NOT enabled (the
-# project does not ship a personal Pacman repository); they are documented in
-# the commented section at the bottom for deliberate, conscious additions.
+# LEGIT OS offensive-security baseline from the official Arch repositories.
+# One package per line. AUR-only modern tools live in aur-tools.list.
 
-# --- RECON / SCAN ---
+# --- DISCOVERY / ENUMERATION / NETWORKING ---
 nmap
 masscan
 rustscan
 arp-scan
 macchanger
-tcpdump
+bind
+whois
 traceroute
+hping
 openbsd-netcat
 socat
+tcpdump
 proxychains-ng
 openvpn
+wireguard-tools
+python-scapy
+net-snmp
+sshpass
+inetutils
 
-# --- WEB / APP TESTING ---
-sqlmap
-nikto
+# --- WEB / APPLICATION TESTING ---
 gobuster
+nikto
+sqlmap
+wpscan
 zaproxy
+mitmproxy
 
-# --- EXPLOIT / FRAMEWORKS ---
+# --- ACTIVE DIRECTORY / WINDOWS ---
+impacket
+openldap
+samba
+freerdp
+rlwrap
+mariadb-clients
+postgresql
+
+# --- EXPLOITATION / POST-EXPLOITATION ---
 metasploit
 exploitdb
 
-# --- BRUTE FORCE / PASSWORD ---
+# --- PASSWORD ATTACKS ---
 hydra
 medusa
 john
 hashcat
 
-# --- WIRELESS ---
+# --- WIRELESS / SNIFFING / MITM ---
 aircrack-ng
-wireless_tools
-
-# --- SNIFFING / MITM ---
+bettercap
 wireshark-qt
 wireshark-cli
-bettercap
-mitmproxy
 
-# --- REVERSE ENGINEERING / BINARY ---
-radare2
-rizin
+# --- REVERSE ENGINEERING / BINARY EXPLOITATION ---
 ghidra
 gdb
-yara
+pwndbg
+gef
+radare2
+rizin
 binwalk
-strace
-
-# --- SUPPORT / MISC ---
-binutils
+checksec
 python-pwntools
-python-requests
-samba
-freerdp
+ropper
+nasm
+ltrace
+strace
+valgrind
+yara
 
-# ----------------------------------------------------------------------
-# Not packaged in official repositories (AUR only) - NOT installed.
-# Removed from the enabled list: dirb, dirsearch, gnu-netcat, netdiscover,
-# tshark (wireshark-cli provides it), wafw00f, whatweb.
-# Manual candidates if a maintainer ever makes them explicit:
-#   burpsuite, bloodhound, evilginx2, getsploit, msfvenom-wrappers, scylla
-# ----------------------------------------------------------------------
+# --- FORENSICS / FILE ANALYSIS / MOBILE / CLOUD ---
+foremost
+perl-image-exiftool
+volatility3
+sleuthkit
+jadx
+trivy

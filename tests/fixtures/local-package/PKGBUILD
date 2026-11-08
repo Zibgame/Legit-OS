@@ -1,0 +1,11 @@
+pkgname=legit-offline-test
+pkgver=1.0.0
+pkgrel=1
+pkgdesc='Disposable package used to validate the embedded LEGIT repository'
+arch=('any')
+license=('MIT')
+options=('!debug')
+
+package() {
+    install -Dm644 /dev/null "$pkgdir/usr/share/legit/offline-repo-test"
+}

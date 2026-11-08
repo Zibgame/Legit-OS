@@ -1,0 +1,13 @@
+xfce4
+xfce4-goodies
+pavucontrol
+gvfs
+xarchiver
+lightdm
+lightdm-gtk-greeter
+network-manager-applet
+pipewire
+pipewire-audio
+pipewire-pulse
+wireplumber
+rtkit

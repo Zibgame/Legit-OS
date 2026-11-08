@@ -1,0 +1,40 @@
+# Maintained HTB/pentest tools which are absent from the official Arch repos.
+#
+# build/build.sh builds these AUR packages as an unprivileged user and exposes
+# the resulting packages to mkarchiso through a temporary local repository.
+# Prefer -bin packages where upstream publishes release artifacts; avoid
+# duplicate, abandoned and legacy-only tools.
+
+# --- MODERN ENUMERATION / WEB ---
+ffuf-bin
+feroxbuster-bin
+nuclei-bin
+nuclei-templates
+subfinder-bin
+httpx-bin
+naabu
+amass
+dirsearch
+wafw00f
+whatweb
+arjun
+dalfox
+
+# --- ACTIVE DIRECTORY / WINDOWS / PIVOTING ---
+enum4linux-ng
+netexec
+responder
+python-bloodhound-ce
+python-certipy-nxc
+evil-winrm-py
+ligolo-ng
+chisel-bin
+peass-ng
+pspy-bin
+
+# --- WORDLISTS / PROXY / MOBILE / STEGO ---
+seclists
+wordlists
+burpsuite
+android-apktool-bin
+steghide

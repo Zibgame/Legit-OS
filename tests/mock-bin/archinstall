@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+[[ "$1" == "--config" && -f "$2" ]]
+jq -e '.packages | index("netexec") != null' "$2" >/dev/null
+grep -q '^\[legit-aur\]$' "$LEGIT_PACMAN_CONF"
+grep -q '^Server = file://' "$LEGIT_PACMAN_CONF"
+echo "Mock Archinstall received the complete toolkit"

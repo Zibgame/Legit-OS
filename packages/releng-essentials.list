@@ -3,7 +3,7 @@
 # from packages/*.list, so anything only in releng would be lost here).
 #
 # - zsh: root's shell on the live CD (pam_shells denies every login without
-#   it). The Zibgame .zshrc replaces grml-zsh-config and avoids its file clash.
+#   it). LEGIT OS deliberately does not ship or modify a .zshrc.
 # - systemd-resolvconf: resolvconf shim for dhcpdns client plumbing.
 # - mtools / squashfs-tools: mkarchiso & rescue tooling.
 # - reflector refreshes mirrorlists; wireless-regdb = wifi regulatory db.

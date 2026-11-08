@@ -1,30 +1,22 @@
-# archinstall - LEGIT OS preset
+# Archinstall preset
 
-This folder holds the LEGIT OS preset for the official Archinstall installer.
-It is shipped inside the live ISO in `/etc/archinstall/`.
+The preset installs the official-repository LEGIT pentest baseline on a new
+Arch system while leaving disk layout, bootloader, encryption and user
+creation interactive.
 
-## What it does
+`legit-install` first offers GNOME, Hyprland, KDE Plasma, XFCE or no desktop.
+The package and service lists in `desktops/` are independent, so one selection
+cannot leak another desktop's packages or files. The Hyprland choice is a clean
+upstream setup: no LEGIT Hyprland configuration and no Quickshell are copied.
+All Nerd Fonts, Vim, NERDTree and vim-devicons are included system-wide.
 
-- `user-configuration.json` : textual (unattended) configuration — locale,
-  bootloader, desktop stack (Hyprland) and the offensive-security packages.
-  `legit-install` (in the ISO) runs:
+OpenVPN, `networkmanager-openvpn`, OpenConnect and WireGuard are installed on
+every target. The generated configuration can be inspected safely with
+`legit-install --desktop gnome --print-config`.
 
-      archinstall --config /etc/archinstall/user-configuration.json
-
-## What it does NOT do
-
-- Archinstall does **not** copy the live environment onto the hard drive.
-  It performs a fresh installation with the packages listed in
-  `user-configuration.json`. The `packages` key must therefore stay in sync
-  with `packages/system.list` + `packages/offensive-tools.list`.
-- Disk layout stays interactive (user chooses the target disk / encryption in
-  Archinstall's UI). Add a `user-disk-layout.json` here and pass
-  `--disk-layout` in `tools/legit-install` if you want it unattended too.
-
-## Keeping things in sync
-
-When you add a tool to `packages/offensive-tools.list`, also add (or comment)
-it in `user-configuration.json` so it ends up on installed systems.
-
-The JSON schema evolves with Archinstall releases; verify the fields against
-the version shipped on the ISO (see `archinstall --help`).
+The live ISO additionally contains maintained AUR tools built by
+`build/build.sh`. Their package archives and repository database are embedded
+under `/usr/share/legit/aur-repo`. `legit-install` temporarily exposes that
+repository to Pacstrap and includes every entry from `aur-tools.list`, then
+removes the temporary repository entry from the installed Pacman config. No
+AUR compilation or manual post-install command is required.

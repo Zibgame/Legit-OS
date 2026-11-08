@@ -1,15 +1,172 @@
 #!/usr/bin/env bash
-# legit-install - run Archinstall with the LEGIT OS bundled preset.
+# legit-install - install LEGIT OS with a user-selected desktop environment.
 set -euo pipefail
 
-CONFIG="/etc/archinstall/user-configuration.json"
+ARCHINSTALL_DIR="${LEGIT_ARCHINSTALL_DIR:-/etc/archinstall}"
+SHARE_DIR="${LEGIT_SHARE_DIR:-/usr/share/legit}"
+PACMAN_CONF="${LEGIT_PACMAN_CONF:-/etc/pacman.conf}"
+BASE_CONFIG="$ARCHINSTALL_DIR/user-configuration.json"
+DESKTOP="${LEGIT_DESKTOP:-}"
+PRINT_CONFIG=0
+ARCHINSTALL_ARGS=()
 
-if [[ ! -f "$CONFIG" ]]; then
-    echo "ERROR: $CONFIG not found. Run from the LEGIT OS live ISO." >&2
+usage() {
+    cat <<'EOF'
+Usage: legit-install [--desktop CHOICE] [--print-config] [-- ARCHINSTALL_ARGS]
+
+Desktop choices: gnome, hyprland, kde, xfce, none.
+Without --desktop, an interactive menu is displayed.
+
+The disk layout, bootloader, encryption and user accounts remain interactive
+inside Archinstall. --print-config only generates the final JSON for checking.
+EOF
+}
+
+while (($#)); do
+    case "$1" in
+        --desktop)
+            [[ $# -ge 2 ]] || { echo "ERROR: --desktop needs a value." >&2; exit 2; }
+            DESKTOP="${2,,}"
+            shift 2
+            ;;
+        --print-config)
+            PRINT_CONFIG=1
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        --)
+            shift
+            ARCHINSTALL_ARGS+=("$@")
+            break
+            ;;
+        *)
+            ARCHINSTALL_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+
+if [[ ! -f "$BASE_CONFIG" ]]; then
+    echo "ERROR: $BASE_CONFIG not found. Run this from the LEGIT OS live ISO." >&2
     exit 1
 fi
 
-echo "LEGIT OS - launching Archinstall with LEGIT preset."
-echo "Disk layout stays interactive: choose your target(s) in Archinstall."
+if [[ -z "$DESKTOP" ]]; then
+    echo "LEGIT OS - choose the desktop to install:"
+    PS3="Choice [1-5]: "
+    select choice in "GNOME" "Hyprland (clean, no LEGIT config)" "KDE Plasma" "XFCE" "None (terminal only)"; do
+        case "$REPLY" in
+            1) DESKTOP=gnome; break ;;
+            2) DESKTOP=hyprland; break ;;
+            3) DESKTOP=kde; break ;;
+            4) DESKTOP=xfce; break ;;
+            5) DESKTOP=none; break ;;
+            *) echo "Please enter a number from 1 to 5." ;;
+        esac
+    done
+fi
+
+case "$DESKTOP" in
+    gnome|hyprland|kde|xfce|none) ;;
+    *) echo "ERROR: unknown desktop '$DESKTOP'." >&2; usage >&2; exit 2 ;;
+esac
+
+DESKTOP_PACKAGES="$ARCHINSTALL_DIR/desktops/$DESKTOP.packages"
+DESKTOP_SERVICES="$ARCHINSTALL_DIR/desktops/$DESKTOP.services"
+for required in "$DESKTOP_PACKAGES" "$DESKTOP_SERVICES"; do
+    [[ -f "$required" ]] || { echo "ERROR: missing installer data: $required" >&2; exit 1; }
+done
+
+command -v jq >/dev/null || { echo "ERROR: jq is required by legit-install." >&2; exit 1; }
+command -v pacman >/dev/null || { echo "ERROR: pacman is required by legit-install." >&2; exit 1; }
+
+TMP_CONFIG="$(mktemp --suffix=.json legit-archinstall.XXXXXX)"
+TMP_PACKAGES="$(mktemp legit-packages.XXXXXX)"
+TMP_SERVICES="$(mktemp legit-services.XXXXXX)"
+TMP_PACMAN_BACKUP="$(mktemp legit-pacman.XXXXXX)"
+PACMAN_MODIFIED=0
+
+cleanup() {
+    if ((PACMAN_MODIFIED)); then
+        cp -a "$TMP_PACMAN_BACKUP" "$PACMAN_CONF"
+    fi
+    rm -f "$TMP_CONFIG" "$TMP_PACKAGES" "$TMP_SERVICES" "$TMP_PACMAN_BACKUP"
+}
+trap cleanup EXIT
+
+read_list() {
+    local file="$1"
+    [[ -f "$file" ]] || return 0
+    sed 's/[[:space:]]*#.*$//' "$file" | sed '/^[[:space:]]*$/d'
+}
+
+{
+    read_list "$ARCHINSTALL_DIR/common-packages.list"
+    read_list "$SHARE_DIR/offensive-tools.list"
+    read_list "$SHARE_DIR/dev-tools.list"
+    read_list "$SHARE_DIR/aur-tools.list"
+    read_list "$DESKTOP_PACKAGES"
+    pacman -Sgq nerd-fonts
+} | sort -u > "$TMP_PACKAGES"
+
+{
+    jq -r '.services[]?' "$BASE_CONFIG"
+    read_list "$DESKTOP_SERVICES"
+} | sort -u > "$TMP_SERVICES"
+
+PACKAGES_JSON="$(jq -Rsc 'split("\n") | map(select(length > 0))' "$TMP_PACKAGES")"
+SERVICES_JSON="$(jq -Rsc 'split("\n") | map(select(length > 0))' "$TMP_SERVICES")"
+jq \
+    --argjson packages "$PACKAGES_JSON" \
+    --argjson services "$SERVICES_JSON" \
+    '.packages = $packages
+     | .services = $services
+     | .custom_commands = [
+         "sed -i \"/^# LEGIT-AUR-BEGIN$/,/^# LEGIT-AUR-END$/d\" /etc/pacman.conf"
+       ]' \
+    "$BASE_CONFIG" > "$TMP_CONFIG"
+
+if ((PRINT_CONFIG)); then
+    cat "$TMP_CONFIG"
+    exit 0
+fi
+
+AUR_REPO="$SHARE_DIR/aur-repo"
+if [[ -s "$SHARE_DIR/aur-tools.list" ]]; then
+    [[ -f "$AUR_REPO/legit-aur.db.tar.gz" ]] || {
+        echo "ERROR: the compiled LEGIT AUR repository is missing from this ISO." >&2
+        echo "Rebuild the ISO; refusing to create an incomplete installation." >&2
+        exit 1
+    }
+    compgen -G "$AUR_REPO/*.pkg.tar.zst" >/dev/null || {
+        echo "ERROR: no compiled AUR packages found in $AUR_REPO." >&2
+        exit 1
+    }
+    [[ -f "$PACMAN_CONF" ]] || { echo "ERROR: $PACMAN_CONF not found." >&2; exit 1; }
+
+    cp -a "$PACMAN_CONF" "$TMP_PACMAN_BACKUP"
+    cat >> "$PACMAN_CONF" <<EOF
+
+# LEGIT-AUR-BEGIN
+[legit-aur]
+SigLevel = Optional TrustAll
+Server = file://$AUR_REPO
+# LEGIT-AUR-END
+EOF
+    PACMAN_MODIFIED=1
+fi
+
+echo "LEGIT OS installer"
+echo "  Desktop: $DESKTOP"
+echo "  Packages: $(wc -l < "$TMP_PACKAGES") (official + compiled AUR + Nerd Fonts)"
+echo "  Services: $(paste -sd, "$TMP_SERVICES")"
+echo "  OpenVPN: CLI and NetworkManager plugin included"
 echo
-exec archinstall --config "$CONFIG" "$@"
+echo "Disk layout, bootloader, encryption and users are selected in Archinstall."
+echo "AUR packages are installed from the ISO; no compilation is performed."
+echo "The installer does not create .zshrc, .vimrc or desktop configuration files."
+echo
+archinstall --config "$TMP_CONFIG" "${ARCHINSTALL_ARGS[@]}"

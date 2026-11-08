@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+if [[ "$*" == "-Sgq nerd-fonts" ]]; then
+    printf '%s\n' ttf-jetbrains-mono-nerd ttf-nerd-fonts-symbols
+    exit 0
+fi
+echo "Unexpected mock pacman call: $*" >&2
+exit 1

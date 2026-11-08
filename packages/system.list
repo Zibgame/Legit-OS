@@ -1,7 +1,7 @@
 # LEGIT OS system packages (live environment)
 # One package per line. Lines starting with '#' and blank lines are ignored.
-# Concatenated with offensive-tools.list by build/build.sh to produce
-# profile/packages.x86_64 for archiso.
+# Concatenated with every packages/*.list by build/build.sh to produce the
+# Archiso package set.
 
 # --- LIVE / ISO BASE (mandatory parts of the archiso releng profile) ---
 base
@@ -34,7 +34,6 @@ archinstall
 iwd
 wpa_supplicant
 networkmanager
-network-manager-applet
 bluez
 bluez-utils
 dnsmasq
@@ -67,55 +66,17 @@ htop
 bat
 ripgrep
 
-# --- AUDIO / DESKTOP STACK ---
-pipewire
-pipewire-audio
-wireplumber
-alsa-utils
-hyprland
-xdg-desktop-portal-hyprland
-xdg-desktop-portal-gtk
-waybar
-wofi
-kitty
-quickshell
-gnome-console
-gnome-terminal
-nautilus
-swaylock
-xdg-terminal-exec
-mako
-polkit-gnome
-wl-clipboard
-grim
-slurp
-brightnessctl
-hyprsunset
-upower
-power-profiles-daemon
-xdg-user-dirs
-xdg-user-dirs-gtk
-swaybg
+# --- EDITOR / TERMINAL COMPATIBILITY ---
+# These packages are system-wide Vim plugins. They do not create or modify
+# ~/.vimrc; NERDTree remains available and vim-devicons supplies its glyphs.
+vim-nerdtree
+vim-devicons
 
-# --- GNOME / ADWAITA INTEGRATION (dark by default) ---
-# Nautilus (GNOME Files) + its virtual filesystem backends so removable media,
-# MTP phones and SMB shares show up, plus the dark Adwaita theme bits.
-gvfs
-gvfs-mtp
-gvfs-smb
-sushi
-file-roller
-ffmpegthumbnailer
-gnome-themes-extra
-adwaita-icon-theme
-adwaita-cursors
-cantarell-fonts
-dconf
-
-# --- FONTS ---
+# Expanded by build/build.sh to every current package in Arch's official
+# nerd-fonts group. No terminal or desktop configuration is imposed.
+@nerd-fonts
 noto-fonts
 noto-fonts-emoji
-ttf-jetbrains-mono-nerd
 terminus-font
 
 # --- BROWSER / DOCS ---
