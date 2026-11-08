@@ -83,6 +83,12 @@ if grep -qx '@nerd-fonts' "$PROFILE_DIR/packages.x86_64"; then
     sed -i '/^@nerd-fonts$/d' "$PROFILE_DIR/packages.x86_64"
     pacman -Sgq nerd-fonts >> "$PROFILE_DIR/packages.x86_64"
     sort -u -o "$PROFILE_DIR/packages.x86_64" "$PROFILE_DIR/packages.x86_64"
+
+# Data-heavy wordlists (seclists ~2GB, wordlists ~700MB) stay OUT of the live
+# environment to keep the squashfs and the ISO small enough for the build
+# disk: they remain in the embedded legit-aur repository, so every installed
+# system still receives them through legit-install.
+sed -i '/^seclists$/d; /^wordlists$/d' "$PROFILE_DIR/packages.x86_64"
 fi
 
 # 4b. Build the maintained HTB tools which Arch does not package officially.
@@ -367,7 +373,9 @@ if ((${#AUR_PACKAGES[@]})); then
 fi
 
 # 6. Build the ISO.
-mkarchiso -v -C "$BUILD_PACMAN_CONF" -w "$WORK_DIR" -o "$OUT_DIR" "$PROFILE_DIR"
+# -c xz: the slower compressor shrinks the squashfs by several GB, which
+# keeps the peak work-directory footprint small enough for the build disk.
+mkarchiso -v -c xz -C "$BUILD_PACMAN_CONF" -w "$WORK_DIR" -o "$OUT_DIR" "$PROFILE_DIR"
 
 echo
 echo "==================================================================="
