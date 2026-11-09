@@ -11,6 +11,7 @@ hl.env("XCURSOR_SIZE", "24")
 hl.on("hyprland.start", function()
     hl.exec_cmd("swaybg -i /usr/share/backgrounds/legit/ocean-balcony.jpeg -m fill")
     hl.exec_cmd("xdg-user-dirs-update")
+    hl.exec_cmd("VBoxClient --clipboard")
 end)
 
 local terminal = "legit-terminal"
