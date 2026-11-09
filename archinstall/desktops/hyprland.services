@@ -1,1 +1,2 @@
-sddm
+# No display manager for the Hyprland desktop: users log in on the console
+# (tty1) and Hyprland auto-starts through the skel .bash_profile hook.
