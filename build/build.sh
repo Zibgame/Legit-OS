@@ -162,6 +162,13 @@ ROBUST_DLAGENTS
     pacman --noconfirm -U /tmp/paru-bin/*.pkg.tar.zst
 
     for package in "${AUR_PACKAGES[@]}"; do
+        # Local overrides always rebuild: their content lives in this
+        # repository and the version-blind cached-artifact shortcut cannot
+        # know when the PKGBUILD or its shipped files changed.
+        if [ -d "$SRC_DIR/packages/aur-overrides/$package" ]; then
+            rm -f "$AUR_REPO"/"$package"-*.pkg.tar.zst
+            rm -f "$AUR_CACHE"/"$package"-*.pkg.tar.zst 2>/dev/null || true
+        fi
         artifact=$(find "$AUR_REPO" -maxdepth 1 -type f \
             -name "$package-*.pkg.tar.zst" ! -name "$package-debug-*.pkg.tar.zst" \
             -print -quit)

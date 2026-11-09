@@ -12,5 +12,5 @@ if command -v systemd-detect-virt >/dev/null 2>&1 \
 fi
 
 if [[ $(tty) = /dev/tty1 && -z $WAYLAND_DISPLAY ]]; then
-    exec Hyprland > /var/log/legit-hyprland.log 2>&1
+    exec start-hyprland > /var/log/legit-hyprland.log 2>&1
 fi
