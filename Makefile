@@ -118,7 +118,8 @@ engine-check:
 image: check
 	"$(CONTAINER_ENGINE)" build -f "$(DOCKERFILE)" -t "$(IMAGE)" build/
 
-all: image engine-check
+all: image
+	@$(MAKE) --no-print-directory engine-check
 	@echo ">>> Building LEGIT OS ISO locally..."
 	$(RUN)
 
