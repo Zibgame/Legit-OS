@@ -1,65 +1,141 @@
-# LEGIT OS - local ISO build (no CI/CD, no remote build actions).
-# Runs mkarchiso inside an Arch Linux container (Docker Desktop, MINGW64 shell).
+# LEGIT OS - local ISO build only (no CI/CD or remote actions).
+# Windows: Docker Desktop / Git Bash; VirtualBox optional.
+# Linux (42): Docker without sudo or rootless Podman; QEMU optional.
 #
-#   make        : build out/LEGIT_OS-<version>-x86_64.iso
-#   make re     : wipe prior output & rebuild the image from scratch
-#   make aur-clean : wipe the compiled-AUR cache (full AUR recompilation)
-#   make vm     : create/refresh the VirtualBox LEGIT-OS VM with the latest ISO
-#                 and boot it (VirtualBox must be installed on the Windows host)
+#   make           build the Arch container + ISO
+#   make re        rebuild container image from scratch + ISO
+#   make aur-clean remove compiled AUR cache
+#   make check     check host prerequisites without downloading an image
+#   make vm        boot the newest ISO (VirtualBox Windows / QEMU Linux)
 #
-# Prerequisite once: export the Norton Web/Mail Shield root certificate
-# (SSL-scanning proxy) to D:/Legit-OS/.cache/host-ca.der, e.g.:
-#   Export-Certificate -Cert (Get-Item Cert:\LocalMachine\Root\<THUMBPRINT>) `
-#       -FilePath D:\Legit-OS\.cache\host-ca.der
+# Linux data, cache and ISO output live under:
+# /sgoinfre/goinfre/Perso/zcadinot/.home/legit-os/
+# Override with: make LEGIT_DATA_DIR=/another/writable/directory
 
-MSYS_NO_PATHCONV := 1
-# Make the Docker Desktop bin dir visible to the recipe shell (MSYS2 sh does
-# not inherit it), required for docker-credential-desktop etc.
-DockerBin := /c/Program Files/Docker/Docker/resources/bin
-export PATH := $(DockerBin):$(PATH)
-MNT := $(shell cygpath -m "$(CURDIR)" 2>/dev/null || echo "$(CURDIR)")
+.DEFAULT_GOAL := all
+
+UNAME_S := $(shell uname -s 2>/dev/null)
+ifneq ($(filter Windows_NT,$(OS)),)
+  HOST_WINDOWS := 1
+else ifneq ($(filter MINGW% MSYS% CYGWIN%,$(UNAME_S)),)
+  HOST_WINDOWS := 1
+else
+  HOST_WINDOWS := 0
+endif
+
 IMAGE := legit-os/builder
-# Docker can be absent from the MSYS2 PATH; fall back to Docker Desktop's CLI.
-DOCKER := $(shell sh -c 'command -v docker || echo "/c/Program Files/Docker/Docker/resources/bin/docker.exe"')
 DOCKERFILE := build/Containerfile
+VMNAME := LEGIT-OS
 
-RUN := MSYS_NO_PATHCONV=1 "$(DOCKER)" run --rm --privileged \
-	--volume "$(MNT)":/legit-os \
-	--volume "D:/Legit-OS/out":/out \
-	--volume "D:/Legit-OS/.cache/archiso/pacman":/var/cache/pacman/pkg \
-	--volume "D:/Legit-OS/.cache/legit-aur":/aur-cache \
-	--volume "D:/Legit-OS/.cache/host-ca.der":/tmp/host-ca.der:ro \
+ifeq ($(HOST_WINDOWS),1)
+  DockerBin := /c/Program Files/Docker/Docker/resources/bin
+  export PATH := $(DockerBin):$(PATH)
+  export MSYS_NO_PATHCONV := 1
+  LEGIT_DATA_DIR ?= D:/Legit-OS
+  MNT := $(shell cygpath -m "$(CURDIR)" 2>/dev/null || echo "$(CURDIR)")
+  CONTAINER_ENGINE ?= $(shell sh -c 'command -v docker || echo "/c/Program Files/Docker/Docker/resources/bin/docker.exe"')
+  HOST_CA ?= $(LEGIT_DATA_DIR)/.cache/host-ca.der
+else
+  LEGIT_DATA_DIR ?= /sgoinfre/goinfre/Perso/zcadinot/.home/legit-os
+  # Rootless Podman image layers should also use the large user storage.
+  export XDG_DATA_HOME ?= $(LEGIT_DATA_DIR)/.xdg/share
+  MNT := $(abspath $(CURDIR))
+  # Prefer usable Podman over Docker with a potentially inaccessible socket.
+  # Override if needed: make CONTAINER_ENGINE=docker
+  CONTAINER_ENGINE ?= $(shell sh -c 'if command -v podman >/dev/null 2>&1 && podman info >/dev/null 2>&1; then echo podman; elif command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then echo docker; else echo unavailable; fi')
+  # No Norton / SSL interception assumption for 42.
+  HOST_CA ?= $(LEGIT_DATA_DIR)/.cache/host-ca.der
+  QEMU ?= qemu-system-x86_64
+  QEMU_IMG ?= qemu-img
+endif
+
+OUT_DIR := $(LEGIT_DATA_DIR)/out
+CACHE_DIR := $(LEGIT_DATA_DIR)/.cache
+AUR_CACHE_DIR := $(CACHE_DIR)/legit-aur
+PACMAN_CACHE_DIR := $(CACHE_DIR)/archiso/pacman
+WORK_ROOT := $(LEGIT_DATA_DIR)/work
+
+# A missing CA should not turn into a Docker-created directory.
+CERT_MOUNT = $(if $(wildcard $(HOST_CA)),--volume "$(HOST_CA):/tmp/host-ca.der:ro",)
+
+RUN = "$(CONTAINER_ENGINE)" run --rm --privileged \
+	--volume "$(MNT):/legit-os:ro" \
+	--volume "$(OUT_DIR):/out" \
+	--volume "$(PACMAN_CACHE_DIR):/var/cache/pacman/pkg" \
+	--volume "$(AUR_CACHE_DIR):/aur-cache" \
+	--volume "$(WORK_ROOT):/work" \
+	$(CERT_MOUNT) \
 	--env OUT_DIR=/out \
 	--env SRC_DIR=/legit-src \
+	--env WORK_DIR=/work/archiso \
+	--env PROFILE_DIR=/work/profile \
+	--env AUR_REPO_DIR=/work/aur-repo \
 	$(IMAGE) /bin/bash -lc 'set -e; \
-	test -s /tmp/host-ca.der || { echo "FATAL: missing D:/Legit-OS/.cache/host-ca.der (export the Norton Web/Mail Shield root cert)"; exit 42; }; \
-	openssl x509 -inform DER -in /tmp/host-ca.der -out /etc/ca-certificates/trust-source/anchors/norton.crt; \
-	update-ca-trust; \
+	if [ -s /tmp/host-ca.der ]; then \
+	  openssl x509 -inform DER -in /tmp/host-ca.der -out /etc/ca-certificates/trust-source/anchors/host.crt; \
+	  update-ca-trust; \
+	fi; \
 	mkdir -p /legit-src; \
-	tar -C /legit-os --exclude=./out --exclude=./.git -cf - . | tar -C /legit-src -xf -; \
+	tar -C /legit-os --exclude=./out --exclude=./work --exclude=./.cache --exclude=./.git -cf - . | tar -C /legit-src -xf -; \
 	exec /bin/bash /legit-src/build/build.sh'
 
-.PHONY: all re image vm aur-clean
+.PHONY: all re image vm aur-clean check engine-check
 
-# Wipes the persistent compiled-AUR cache; the next build recompiles every
-# AUR package (use this after upgrading packages/aur-tools.list versions).
+# Host sudo is never invoked.
+check:
+	@set -eu; \
+	echo ">>> LEGIT OS host check: $(if $(filter 1,$(HOST_WINDOWS)),Windows,Linux)"; \
+	mkdir -p "$(OUT_DIR)" "$(PACMAN_CACHE_DIR)" "$(AUR_CACHE_DIR)" "$(WORK_ROOT)" "$(LEGIT_DATA_DIR)/.xdg/share"; \
+	test -w "$(OUT_DIR)" || { echo 'ERROR: ISO output is not writable: $(OUT_DIR)' >&2; exit 1; }; \
+	if [ "$(CONTAINER_ENGINE)" = unavailable ] || ! command -v "$(CONTAINER_ENGINE)" >/dev/null 2>&1; then \
+	  echo 'ERROR: no usable Docker/Podman executable without sudo.' >&2; \
+	  echo '42 requires configured rootless Podman or access to a Docker daemon.' >&2; \
+	  exit 1; \
+	fi; \
+	if ! "$(CONTAINER_ENGINE)" info >/dev/null 2>&1; then \
+	  echo 'ERROR: the container engine is inaccessible to this user without sudo.' >&2; \
+	  exit 1; \
+	fi; \
+	if [ "$(HOST_WINDOWS)" = 1 ] && [ ! -s "$(HOST_CA)" ]; then \
+	  echo 'ERROR: Norton DER root certificate missing at $(HOST_CA)' >&2; exit 1; \
+	fi; \
+	echo ">>> Engine: $(CONTAINER_ENGINE)"; \
+	echo ">>> Output: $(OUT_DIR)"; \
+	echo ">>> Cache: $(CACHE_DIR)"; \
+	if [ "$(HOST_WINDOWS)" = 0 ] && [ "$(CONTAINER_ENGINE)" = podman ]; then \
+	  if command -v unshare >/dev/null 2>&1 && unshare -Ur true >/dev/null 2>&1; then \
+	    echo '>>> User namespaces: available'; \
+	  else \
+	    echo 'WARNING: unshare -Ur is unavailable; mkarchiso may fail on this host.' >&2; \
+	  fi; \
+	fi
+
+# A working container daemon alone does not mean mkarchiso can mount filesystems.
+# Rootless --privileged does not bypass the host kernel's limits.
+engine-check:
+	@"$(CONTAINER_ENGINE)" run --rm --privileged "$(IMAGE)" /bin/bash -ec 'mkdir -p /tmp/legit-mount-test; if ! mount -t tmpfs tmpfs /tmp/legit-mount-test; then echo "ERROR: mounts unavailable in this container; mkarchiso cannot run. Kernel namespaces/mount support required." >&2; exit 1; fi; umount /tmp/legit-mount-test'
+
+image: check
+	"$(CONTAINER_ENGINE)" build -f "$(DOCKERFILE)" -t "$(IMAGE)" build/
+
+all: image engine-check
+	@echo ">>> Building LEGIT OS ISO locally..."
+	$(RUN)
+
+re: check
+	@echo ">>> Full rebuild: fresh container image and ISO."
+	"$(CONTAINER_ENGINE)" build --no-cache -f "$(DOCKERFILE)" -t "$(IMAGE)" build/
+	@rm -f "$(OUT_DIR)"/*.iso
+	@$(MAKE) --no-print-directory engine-check
+	$(RUN)
+
 aur-clean:
-	@echo ">>> Clearing compiled AUR cache (D:/Legit-OS/.cache/legit-aur)..."
-	@rm -rf "D:/Legit-OS/.cache/legit-aur"
+	@set -eu; \
+	test -n "$(AUR_CACHE_DIR)" && test "$(AUR_CACHE_DIR)" != /; \
+	echo ">>> Clearing compiled AUR cache ($(AUR_CACHE_DIR))..."; \
+	rm -rf "$(AUR_CACHE_DIR)"
 
-all: image
-	@echo ">>> Building LEGIT OS ISO (this can take a while)..."
-	$(RUN)
-
-re:
-	@echo ">>> Full rebuild: fresh container image, no prior ISO."
-	MSYS_NO_PATHCONV=1 "$(DOCKER)" build --no-cache -f "$(DOCKERFILE)" -t $(IMAGE) build/
-	@$(RM) -f out/*.iso
-	$(RUN)
-
-image:
-	MSYS_NO_PATHCONV=1 "$(DOCKER)" build -f "$(DOCKERFILE)" -t $(IMAGE) build/
-
+ifeq ($(HOST_WINDOWS),1)
 # --- VIRTUALBOX (create + boot the ISO in a local VM) ---
 # Creates the LEGIT-OS VM profile (UEFI, 8 GB RAM, VMSVGA + 3D, 60 GB disk,
 # DVD with the latest out/*.iso) and starts it in a GUI window.
@@ -72,7 +148,7 @@ vm:
 	@set -e; \
 	echo ">>> VirtualBox VM setup for LEGIT OS"; \
 	"$(VB)" --version > /dev/null 2>&1 || { echo 'ERROR: VirtualBox not found (install it from https://www.virtualbox.org/)'; exit 1; }; \
-	iso=$$(ls -t out/*.iso 2>/dev/null | head -n 1); \
+	iso=$(ls -t "$(OUT_DIR)"/*.iso 2>/dev/null | head -n 1); \
 	test -n "$$iso" || { echo 'ERROR: no ISO in out/, run make first'; exit 1; }; \
 	echo ">>> Using ISO: $$iso"; \
 	isowin=$$(cygpath -w "$$iso"); \
@@ -102,3 +178,24 @@ vm:
 	  echo ">>> Starting VM $(VMNAME)..."; \
 	  "$(VB)" startvm "$(VMNAME)" --type gui; \
 	fi
+
+else
+# Linux: QEMU userspace emulator. KVM is optional; TCG needs no host sudo.
+vm:
+	@set -eu; \
+	command -v "$(QEMU)" >/dev/null 2>&1 && command -v "$(QEMU_IMG)" >/dev/null 2>&1 || { \
+	  echo 'ERROR: QEMU/qemu-img unavailable in PATH.' >&2; exit 1; \
+	}; \
+	iso=$$(ls -t "$(OUT_DIR)"/*.iso 2>/dev/null | head -n 1); \
+	test -n "$$iso" || { echo 'ERROR: no ISO, run make first' >&2; exit 1; }; \
+	mkdir -p "$(LEGIT_DATA_DIR)/vm"; \
+	disk="$(LEGIT_DATA_DIR)/vm/$(VMNAME).qcow2"; \
+	if [ ! -f "$$disk" ]; then "$(QEMU_IMG)" create -f qcow2 "$$disk" 60G; fi; \
+	accel=tcg; \
+	if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then accel=kvm; fi; \
+	echo ">>> QEMU boot with ISO $$iso (accel=$$accel)"; \
+	"$(QEMU)" -machine "accel=$$accel" -m 8192 -smp 2 \
+	  -drive "file=$$disk,format=qcow2,if=virtio" \
+	  -cdrom "$$iso" -boot order=d \
+	  -nic user,model=e1000
+endif
