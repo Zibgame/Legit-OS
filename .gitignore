@@ -7,3 +7,8 @@
 Thumbs.db
 *.swp
 target/
+
+# Persistent local builder data when kept in the checkout
+/.cache/
+/.xdg/
+/vm/

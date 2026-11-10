@@ -93,7 +93,7 @@ fi
 #     package (including AUR-only dependencies) is collected in a temporary
 #     local repository consumed by mkarchiso; no AUR helper ships in the ISO.
 AUR_LIST="$SRC_DIR/packages/aur-tools.list"
-AUR_REPO=/tmp/legit-aur-repo
+AUR_REPO="${AUR_REPO_DIR:-/tmp/legit-aur-repo}"
 # Persistent host cache (mounted by the Makefile).  Compiled packages are
 # copied here as soon as they build, so a run aborted by the flaky network
 # resumes instead of recompiling everything from scratch.
