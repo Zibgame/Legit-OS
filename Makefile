@@ -93,8 +93,8 @@ RUN = "$(CONTAINER_ENGINE)" run --rm --privileged \
 	fi; \
 	if [ -d /pacman-cache-import ]; then \
 	  for pkg in /pacman-cache-import/*.pkg.tar.zst; do \
-	    [ -f "$pkg" ] || continue; \
-	    cp -n "$pkg" /var/cache/pacman/pkg/; \
+	    [ -f "$$pkg" ] || continue; \
+	    cp -n "$$pkg" /var/cache/pacman/pkg/; \
 	  done; \
 	fi; \
 	mkdir -p /legit-src; \
@@ -145,14 +145,14 @@ engine-check:
 	  --volume "$(PACMAN_CACHE_MOUNT):/var/cache/pacman/pkg" \
 	  --volume "$(WORK_MOUNT):/work" \
 	  "$(IMAGE)" /bin/bash -ec 'set -e; \
-	  test_dir=$(mktemp -d /var/cache/pacman/pkg/legit-chown-XXXXXXXX); \
-	  if ! chown alpm:alpm "$test_dir"; then \
+	  test_dir=$$(mktemp -d /var/cache/pacman/pkg/legit-chown-XXXXXXXX); \
+	  if ! chown alpm:alpm "$$test_dir"; then \
 	    echo "ERROR: Pacman cache cannot chown to alpm; use a local engine-managed volume." >&2; exit 1; \
 	  fi; \
-	  rm -rf "$test_dir"; \
-	  test_dir=$(mktemp -d /work/legit-chown-XXXXXXXX); \
-	  chown alpm:alpm "$test_dir" || { echo "ERROR: archiso work volume cannot chown." >&2; exit 1; }; \
-	  rm -rf "$test_dir"; \
+	  rm -rf "$$test_dir"; \
+	  test_dir=$$(mktemp -d /work/legit-chown-XXXXXXXX); \
+	  chown alpm:alpm "$$test_dir" || { echo "ERROR: archiso work volume cannot chown." >&2; exit 1; }; \
+	  rm -rf "$$test_dir"; \
 	  mkdir -p /tmp/legit-mount-test; \
 	  if ! mount -t tmpfs tmpfs /tmp/legit-mount-test; then \
 	    echo "ERROR: mounts unavailable in container; mkarchiso requires mount permissions." >&2; exit 1; \
