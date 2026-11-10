@@ -55,15 +55,31 @@ AUR_CACHE_DIR := $(CACHE_DIR)/legit-aur
 PACMAN_CACHE_DIR := $(CACHE_DIR)/archiso/pacman
 WORK_ROOT := $(LEGIT_DATA_DIR)/work
 
+# On rootless Linux, bind mounts from sgoinfre can reject chown() to alpm.
+# Engine-managed named volumes retain Pacman packages and archiso work between
+# container runs; the ISO output and compiled AUR artifacts remain in sgoinfre.
+ifeq ($(HOST_WINDOWS),1)
+  PACMAN_CACHE_MOUNT := $(PACMAN_CACHE_DIR)
+  WORK_MOUNT := $(WORK_ROOT)
+  PACMAN_IMPORT_MOUNT :=
+else
+  PACMAN_VOLUME ?= legit-os-pacman-cache
+  WORK_VOLUME ?= legit-os-work
+  PACMAN_CACHE_MOUNT := $(PACMAN_VOLUME)
+  WORK_MOUNT := $(WORK_VOLUME)
+  PACMAN_IMPORT_MOUNT := --volume "$(PACMAN_CACHE_DIR):/pacman-cache-import:ro"
+endif
+
 # A missing CA should not turn into a Docker-created directory.
 CERT_MOUNT = $(if $(wildcard $(HOST_CA)),--volume "$(HOST_CA):/tmp/host-ca.der:ro",)
 
 RUN = "$(CONTAINER_ENGINE)" run --rm --privileged \
 	--volume "$(MNT):/legit-os:ro" \
 	--volume "$(OUT_DIR):/out" \
-	--volume "$(PACMAN_CACHE_DIR):/var/cache/pacman/pkg" \
+	--volume "$(PACMAN_CACHE_MOUNT):/var/cache/pacman/pkg" \
 	--volume "$(AUR_CACHE_DIR):/aur-cache" \
-	--volume "$(WORK_ROOT):/work" \
+	--volume "$(WORK_MOUNT):/work" \
+	$(PACMAN_IMPORT_MOUNT) \
 	$(CERT_MOUNT) \
 	--env OUT_DIR=/out \
 	--env SRC_DIR=/legit-src \
@@ -74,6 +90,12 @@ RUN = "$(CONTAINER_ENGINE)" run --rm --privileged \
 	if [ -s /tmp/host-ca.der ]; then \
 	  openssl x509 -inform DER -in /tmp/host-ca.der -out /etc/ca-certificates/trust-source/anchors/host.crt; \
 	  update-ca-trust; \
+	fi; \
+	if [ -d /pacman-cache-import ]; then \
+	  for pkg in /pacman-cache-import/*.pkg.tar.zst; do \
+	    [ -f "$pkg" ] || continue; \
+	    cp -n "$pkg" /var/cache/pacman/pkg/; \
+	  done; \
 	fi; \
 	mkdir -p /legit-src; \
 	tar -C /legit-os --exclude=./out --exclude=./work --exclude=./.cache --exclude=./.git -cf - . | tar -C /legit-src -xf -; \
@@ -101,7 +123,9 @@ check:
 	fi; \
 	echo ">>> Engine: $(CONTAINER_ENGINE)"; \
 	echo ">>> Output: $(OUT_DIR)"; \
-	echo ">>> Cache: $(CACHE_DIR)"; \
+	echo ">>> AUR cache: $(AUR_CACHE_DIR)"; \
+	echo ">>> Pacman cache mount: $(PACMAN_CACHE_MOUNT)"; \
+	echo ">>> Archiso work mount: $(WORK_MOUNT)"; \
 	if [ "$(HOST_WINDOWS)" = 0 ] && [ "$(CONTAINER_ENGINE)" = podman ]; then \
 	  if command -v unshare >/dev/null 2>&1 && unshare -Ur true >/dev/null 2>&1; then \
 	    echo '>>> User namespaces: available'; \
@@ -112,8 +136,28 @@ check:
 
 # A working container daemon alone does not mean mkarchiso can mount filesystems.
 # Rootless --privileged does not bypass the host kernel's limits.
+ifeq ($(HOST_WINDOWS),1)
 engine-check:
 	@"$(CONTAINER_ENGINE)" run --rm --privileged "$(IMAGE)" /bin/bash -ec 'mkdir -p /tmp/legit-mount-test; if ! mount -t tmpfs tmpfs /tmp/legit-mount-test; then echo "ERROR: mounts unavailable in this container; mkarchiso cannot run. Kernel namespaces/mount support required." >&2; exit 1; fi; umount /tmp/legit-mount-test'
+else
+engine-check:
+	@"$(CONTAINER_ENGINE)" run --rm --privileged \
+	  --volume "$(PACMAN_CACHE_MOUNT):/var/cache/pacman/pkg" \
+	  --volume "$(WORK_MOUNT):/work" \
+	  "$(IMAGE)" /bin/bash -ec 'set -e; \
+	  test_dir=$(mktemp -d /var/cache/pacman/pkg/legit-chown-XXXXXXXX); \
+	  if ! chown alpm:alpm "$test_dir"; then \
+	    echo "ERROR: Pacman cache cannot chown to alpm; use a local engine-managed volume." >&2; exit 1; \
+	  fi; \
+	  rm -rf "$test_dir"; \
+	  test_dir=$(mktemp -d /work/legit-chown-XXXXXXXX); \
+	  chown alpm:alpm "$test_dir" || { echo "ERROR: archiso work volume cannot chown." >&2; exit 1; }; \
+	  rm -rf "$test_dir"; \
+	  mkdir -p /tmp/legit-mount-test; \
+	  if ! mount -t tmpfs tmpfs /tmp/legit-mount-test; then \
+	    echo "ERROR: mounts unavailable in container; mkarchiso requires mount permissions." >&2; exit 1; \
+	  fi; umount /tmp/legit-mount-test'
+endif
 
 image: check
 	"$(CONTAINER_ENGINE)" build -f "$(DOCKERFILE)" -t "$(IMAGE)" build/
